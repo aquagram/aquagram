@@ -1,7 +1,7 @@
 package aquagram
 
 type Event interface {
-	GetText() string
+	GetMessage() *Message
 	GetCallbackQuery() *CallbackQuery
 	GetFrom() *User
 	GetChat() *Chat

@@ -11,6 +11,10 @@ type CallbackQuery struct {
 	GameShortName   string   `json:"game_short_name"`
 }
 
+func (callback *CallbackQuery) GetMessage() *Message {
+	return nil
+}
+
 func (callback *CallbackQuery) GetFrom() *User {
 	return callback.From
 }
@@ -25,10 +29,6 @@ func (callback *CallbackQuery) GetChat() *Chat {
 
 func (callback *CallbackQuery) GetCallbackQuery() *CallbackQuery {
 	return nil
-}
-
-func (callback *CallbackQuery) GetText() string {
-	return EmptyString
 }
 
 func (callback *CallbackQuery) GetEntities() []MessageEntity {

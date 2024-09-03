@@ -110,6 +110,10 @@ func (message *Message) Reply(bot *Bot, text string, params *SendMessageParams) 
 	return bot.SendMessage(ChatID(message.Chat.ID), text, params)
 }
 
+func (message *Message) GetMessage() *Message {
+	return message
+}
+
 func (message *Message) GetFrom() *User {
 	return message.From
 }
@@ -120,10 +124,6 @@ func (message *Message) GetChat() *Chat {
 
 func (message *Message) GetCallbackQuery() *CallbackQuery {
 	return nil
-}
-
-func (message *Message) GetText() string {
-	return message.Text
 }
 
 func (message *Message) GetEntities() []MessageEntity {

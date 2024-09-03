@@ -36,8 +36,12 @@ func CommandMiddleware(bot *Bot, command string) Middleware {
 	}
 
 	return func(event Event) error {
-		text := event.GetText()
-		if text == "" {
+		message := event.GetMessage()
+		if message == nil {
+			return ErrStopPropagation
+		}
+
+		if message.Text == "" {
 			return ErrStopPropagation
 		}
 
@@ -49,7 +53,7 @@ func CommandMiddleware(bot *Bot, command string) Middleware {
 				continue
 			}
 
-			commandText = text[entity.Offset:entity.Length]
+			commandText = message.Text[entity.Offset:entity.Length]
 			break
 		}
 
