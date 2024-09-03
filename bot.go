@@ -8,12 +8,8 @@ import (
 	"sync"
 )
 
-type UpdatesMethod string
-
 const (
 	DefaultApiUrl = "https://api.telegram.org"
-	MethodPolling = "polling"
-	MethodWebhook = "webhook"
 )
 
 type Bot struct {
@@ -22,9 +18,8 @@ type Bot struct {
 
 	token string
 
-	Middlewares     []Middleware
-	handlers        Handlers
-	messageHandlers map[UpdateType][]*MessageHandler
+	Middlewares []Middleware
+	handlers    Handlers
 
 	commands        []string
 	commandHandlers map[string][]*MessageHandler
@@ -35,17 +30,17 @@ type Bot struct {
 	mux         sync.Mutex
 	stopContext context.Context
 	stopFunc    context.CancelFunc
+
+	LastUpdateID   int
+	AllowedUpdates []MessageEntity
 }
 
 func NewBot(token string) *Bot {
 	bot := new(Bot)
 	bot.ApiUrl = DefaultApiUrl
-
 	bot.token = token
 
 	bot.handlers = make(Handlers)
-	bot.messageHandlers = make(map[UpdateType][]*MessageHandler)
-
 	bot.Client = new(http.Client)
 
 	bot.Logger = log.Default()
@@ -70,22 +65,30 @@ func (bot *Bot) start() error {
 }
 
 func (bot *Bot) StartPolling() error {
+	return bot.StartPollingWithOptions(nil)
+}
+
+func (bot *Bot) StartPollingWithOptions(options *PollingOptions) error {
 	if err := bot.start(); err != nil {
 		return err
 	}
 
 	updater := NewPollingUpdater(bot)
-	updater.Start(bot.stopContext)
+	updater.Options = options
+	updater.Start()
 
 	return nil
 }
 
-func (bot *Bot) StartWebhook() error {
+func (bot *Bot) StartWebhook(addr string, secretToken string) error {
 	if err := bot.start(); err != nil {
 		return err
 	}
 
-	return nil
+	updater := NewWebhookUpdater(bot)
+	updater.secretToken = secretToken
+
+	return updater.Start(addr)
 }
 
 func (bot *Bot) Stop() {
