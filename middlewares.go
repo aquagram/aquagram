@@ -82,7 +82,7 @@ func CallbackQueryMiddleware(callback string) Middleware {
 			return ErrStopPropagation
 		}
 
-		if callbackQuery.Data != callback {
+		if !strings.HasPrefix(callbackQuery.Data, callback) {
 			return ErrStopPropagation
 		}
 
