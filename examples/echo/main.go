@@ -8,7 +8,7 @@ import (
 )
 
 func StartCommandHandler(bot *aquagram.Bot, message *aquagram.Message) error {
-	message.Reply(bot, "Hello from Aquagram!", nil)
+	message.Reply("Hello from Aquagram!", nil)
 	return nil
 }
 
@@ -17,7 +17,7 @@ func HelloCommandHandler(bot *aquagram.Bot, message *aquagram.Message) error {
 	text := fmt.Sprintf("Hi %s!", mention)
 
 	// a non-nil message is always returned when error is nil.
-	msg, err := message.Reply(bot, text, &aquagram.SendMessageParams{
+	msg, err := message.Reply(text, &aquagram.SendMessageParams{
 		ParseMode: aquagram.ParseModeHtml,
 	})
 

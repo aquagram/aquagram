@@ -11,7 +11,7 @@ var (
 )
 
 func StartCommandHandler(bot *aquagram.Bot, message *aquagram.Message) error {
-	_, err := message.Reply(bot, "Hello from Aquagram!", nil)
+	_, err := message.Reply("Hello from Aquagram!", nil)
 	return err
 }
 

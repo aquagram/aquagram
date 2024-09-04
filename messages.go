@@ -58,6 +58,38 @@ type ReplyParameters struct {
 	MessageID int `json:"message_id"`
 }
 
+func (message *Message) process(bot *Bot) {
+	message.Bot = bot
+
+	for _, entity := range message.Entities {
+		entity.Message = message
+	}
+
+	for _, entity := range message.CaptionEntities {
+		entity.Message = message
+	}
+}
+
+func (message *Message) GetMessage() *Message {
+	return message
+}
+
+func (message *Message) GetFrom() *User {
+	return message.From
+}
+
+func (message *Message) GetChat() *Chat {
+	return message.Chat
+}
+
+func (message *Message) GetCallbackQuery() *CallbackQuery {
+	return nil
+}
+
+func (message *Message) GetEntities() []*MessageEntity {
+	return message.Entities
+}
+
 type SendMessageParams struct {
 	BusinessConnectionID string              `json:"business_connection_id,omitempty"`
 	ChatID               string              `json:"chat_id"`
@@ -96,7 +128,7 @@ func (bot *Bot) SendMessageWithContext(ctx context.Context, chatID string, text 
 	return message, nil
 }
 
-func (message *Message) Reply(bot *Bot, text string, params *SendMessageParams) (*Message, error) {
+func (message *Message) Reply(text string, params *SendMessageParams) (*Message, error) {
 	if params == nil {
 		params = new(SendMessageParams)
 	}
@@ -107,39 +139,7 @@ func (message *Message) Reply(bot *Bot, text string, params *SendMessageParams) 
 
 	params.ReplyParameters.MessageID = message.MessageID
 
-	return bot.SendMessage(ChatID(message.Chat.ID), text, params)
-}
-
-func (message *Message) GetMessage() *Message {
-	return message
-}
-
-func (message *Message) GetFrom() *User {
-	return message.From
-}
-
-func (message *Message) GetChat() *Chat {
-	return message.Chat
-}
-
-func (message *Message) GetCallbackQuery() *CallbackQuery {
-	return nil
-}
-
-func (message *Message) GetEntities() []*MessageEntity {
-	return message.Entities
-}
-
-func (message *Message) process(bot *Bot) {
-	message.Bot = bot
-
-	for _, entity := range message.Entities {
-		entity.Message = message
-	}
-
-	for _, entity := range message.CaptionEntities {
-		entity.Message = message
-	}
+	return message.Bot.SendMessage(ChatID(message.Chat.ID), text, params)
 }
 
 type EditMessageParams struct {
