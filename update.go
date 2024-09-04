@@ -57,6 +57,19 @@ type Handler struct {
 }
 
 func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
+	for _, middleware := range bot.Middlewares {
+		err := middleware(update)
+
+		if err != nil {
+			if errors.Is(err, ErrStopPropagation) {
+				return
+			}
+
+			bot.Logger.Printf("skiping handler execution due to a global middleware error: %v\n", err)
+			return
+		}
+	}
+
 	handlers, ok := bot.handlers[updateType]
 	if !ok {
 		return
