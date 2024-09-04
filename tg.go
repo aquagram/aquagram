@@ -48,7 +48,7 @@ func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQuer
 		return false, err
 	}
 
-	success, err := ParseRawResult[bool](data)
+	success, err := ParseRawResult[bool](bot, data)
 	if err != nil {
 		return false, err
 	}

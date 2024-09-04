@@ -51,7 +51,7 @@ func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) (bool, error) {
 			return success, err
 		}
 
-		result, err := ParseRawResult[bool](data)
+		result, err := ParseRawResult[bool](bot, data)
 		if err != nil {
 			return success, err
 		}
@@ -66,7 +66,7 @@ func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) (bool, error) {
 		return success, err
 	}
 
-	result, err := ParseRawResult[bool](data)
+	result, err := ParseRawResult[bool](bot, data)
 	if err != nil {
 		return success, err
 	}
@@ -91,7 +91,7 @@ func (bot *Bot) DeleteWebhook(dropPendingUpdates bool) (bool, error) {
 		return success, err
 	}
 
-	result, err := ParseRawResult[bool](data)
+	result, err := ParseRawResult[bool](bot, data)
 	if err != nil {
 		return success, err
 	}
@@ -108,7 +108,7 @@ func (bot *Bot) GetWebhookInfo() (*WebhookInfo, error) {
 		return nil, err
 	}
 
-	return ParseRawResult[WebhookInfo](data)
+	return ParseRawResult[WebhookInfo](bot, data)
 }
 
 func (p *SetWebhookParams) ToParams() (Params, error) {

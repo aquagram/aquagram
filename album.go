@@ -79,7 +79,7 @@ func (bot *Bot) SendMediaGroupWithContext(ctx context.Context, chatID string, me
 			return nil, err
 		}
 
-		messages, err := ParseRawResult[[]*Message](data)
+		messages, err := ParseRawResult[[]*Message](bot, data)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +92,7 @@ func (bot *Bot) SendMediaGroupWithContext(ctx context.Context, chatID string, me
 		return nil, err
 	}
 
-	messages, err := ParseRawResult[[]*Message](data)
+	messages, err := ParseRawResult[[]*Message](bot, data)
 	if err != nil {
 		return nil, err
 	}

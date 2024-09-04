@@ -60,7 +60,7 @@ func (bot *Bot) SendDocumentWithContext(ctx context.Context, chatID string, docu
 		return nil, err
 	}
 
-	message, err := ParseRawResult[Message](data)
+	message, err := ParseRawResult[Message](bot, data)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (bot *Bot) SendPhotoWithContext(ctx context.Context, chatID string, photo *
 		return nil, err
 	}
 
-	message, err := ParseRawResult[Message](data)
+	message, err := ParseRawResult[Message](bot, data)
 	if err != nil {
 		return nil, err
 	}

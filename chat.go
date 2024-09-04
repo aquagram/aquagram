@@ -141,7 +141,7 @@ func (bot *Bot) GetChatMemberWithContext(ctx context.Context, chatID string, use
 		return nil, err
 	}
 
-	member, err := ParseRawResult[ChatMember](data)
+	member, err := ParseRawResult[ChatMember](bot, data)
 	if err != nil {
 		return nil, err
 	}

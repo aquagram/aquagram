@@ -13,7 +13,7 @@ const (
 	FalseAsString string = "false"
 )
 
-func ParseRawResult[T any](data []byte) (*T, error) {
+func ParseRawResult[T any](bot *Bot, data []byte) (*T, error) {
 	var res struct {
 		Ok          bool   `json:"ok"`
 		Result      *T     `json:"result"`
@@ -34,7 +34,7 @@ func ParseRawResult[T any](data []byte) (*T, error) {
 	}
 
 	if message, ok := any(res.Result).(*Message); ok {
-		message.process()
+		message.process(bot)
 	}
 
 	return res.Result, nil

@@ -8,6 +8,8 @@ import (
 //
 // https://core.telegram.org/bots/api#message
 type Message struct {
+	Bot *Bot `json:"-"`
+
 	MessageID             int                 `json:"message_id"`
 	MessageThreadID       int                 `json:"message_thread_id,omitempty"`
 	From                  *User               `json:"from,omitempty"`
@@ -57,15 +59,16 @@ type ReplyParameters struct {
 }
 
 type SendMessageParams struct {
-	ChatID               string           `json:"chat_id"`
-	Text                 string           `json:"text"`
-	BusinessConnectionID string           `json:"business_connection_id,omitempty"`
-	MessageThreadID      int              `json:"message_thread_id,omitempty"`
-	ParseMode            ParseMode        `json:"parse_mode,omitempty"`
-	Entities             []MessageEntity  `json:"entities,omitempty"`
-	DisableNotification  bool             `json:"disable_notification,omitempty"`
-	ReplyParameters      *ReplyParameters `json:"reply_parameters,omitempty"`
-	ReplyMarkup          ReplyMarkup      `json:"reply_markup,omitempty"`
+	BusinessConnectionID string              `json:"business_connection_id,omitempty"`
+	ChatID               string              `json:"chat_id"`
+	MessageThreadID      int                 `json:"message_thread_id,omitempty"`
+	Text                 string              `json:"text"`
+	ParseMode            ParseMode           `json:"parse_mode,omitempty"`
+	Entities             []MessageEntity     `json:"entities,omitempty"`
+	LinkPreviewOptions   *LinkPreviewOptions `json:"link_preview_options,omitempty"`
+	DisableNotification  bool                `json:"disable_notification,omitempty"`
+	ReplyParameters      *ReplyParameters    `json:"reply_parameters,omitempty"`
+	ReplyMarkup          ReplyMarkup         `json:"reply_markup,omitempty"`
 }
 
 func (bot *Bot) SendMessage(chatID string, text string, params *SendMessageParams) (*Message, error) {
@@ -85,7 +88,7 @@ func (bot *Bot) SendMessageWithContext(ctx context.Context, chatID string, text 
 		return nil, err
 	}
 
-	message, err := ParseRawResult[Message](data)
+	message, err := ParseRawResult[Message](bot, data)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +130,9 @@ func (message *Message) GetEntities() []*MessageEntity {
 	return message.Entities
 }
 
-func (message *Message) process() {
+func (message *Message) process(bot *Bot) {
+	message.Bot = bot
+
 	for _, entity := range message.Entities {
 		entity.Message = message
 	}
@@ -135,4 +140,94 @@ func (message *Message) process() {
 	for _, entity := range message.CaptionEntities {
 		entity.Message = message
 	}
+}
+
+type EditMessageParams struct {
+	BusinessConnectionID string              `json:"business_connection_id,omitempty"`
+	ChatID               string              `json:"chat_id"`
+	MessageID            int                 `json:"message_id,omitempty"`
+	InlineMessageID      int                 `json:"inline_message_id,omitempty"`
+	Text                 string              `json:"text"`
+	ParseMode            ParseMode           `json:"parse_mode,omitempty"`
+	Entities             []MessageEntity     `json:"entities,omitempty"`
+	LinkPreviewOptions   *LinkPreviewOptions `json:"link_preview_options,omitempty"`
+	ReplyMarkup          ReplyMarkup         `json:"reply_markup,omitempty"`
+}
+
+func (message *Message) EditText(text string, params *EditMessageParams) (*Message, error) {
+	return message.Bot.EditMessageText(ChatID(message.Chat.ID), message.MessageID, text, params)
+}
+
+// https://core.telegram.org/bots/api#editmessagetext
+func (bot *Bot) EditMessageText(chatID string, messageID int, text string, params *EditMessageParams) (*Message, error) {
+	return bot.EditMessageTextWithContext(bot.stopContext, chatID, messageID, text, params)
+}
+
+func (bot *Bot) EditMessageTextWithContext(ctx context.Context, chatID string, messageID int, text string, params *EditMessageParams) (*Message, error) {
+	if params == nil {
+		params = new(EditMessageParams)
+	}
+
+	params.ChatID = chatID
+	params.MessageID = messageID
+	params.Text = text
+
+	data, err := bot.Raw(ctx, "editMessageText", params)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseRawResult[Message](bot, data)
+}
+
+func (message *Message) Delete() (bool, error) {
+	return message.Bot.DeleteMessage(ChatID(message.Chat.ID), message.MessageID)
+}
+
+// https://core.telegram.org/bots/api#deletemessage
+func (bot *Bot) DeleteMessage(chatID string, messageID int) (bool, error) {
+	return bot.DeleteMessageWithContext(bot.stopContext, chatID, messageID)
+}
+
+func (bot *Bot) DeleteMessageWithContext(ctx context.Context, chatID string, messageID int) (bool, error) {
+	params := map[string]any{
+		"chat_id":    chatID,
+		"message_id": messageID,
+	}
+
+	data, err := bot.Raw(ctx, "deleteMessage", params)
+	if err != nil {
+		return false, err
+	}
+
+	success, err := ParseRawResult[bool](bot, data)
+	if err != nil {
+		return false, err
+	}
+
+	return *success, nil
+}
+
+// https://core.telegram.org/bots/api#deletemessages
+func (bot *Bot) DeleteMessages(chatID string, messageIDs []int) (bool, error) {
+	return bot.DeleteMessagesWithContext(bot.stopContext, chatID, messageIDs)
+}
+
+func (bot *Bot) DeleteMessagesWithContext(ctx context.Context, chatID string, messageIDs []int) (bool, error) {
+	params := map[string]any{
+		"chat_id":     chatID,
+		"message_ids": messageIDs,
+	}
+
+	data, err := bot.Raw(bot.stopContext, "deleteMessages", params)
+	if err != nil {
+		return false, err
+	}
+
+	success, err := ParseRawResult[bool](bot, data)
+	if err != nil {
+		return false, err
+	}
+
+	return *success, nil
 }

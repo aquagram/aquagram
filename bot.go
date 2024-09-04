@@ -108,7 +108,7 @@ func (bot *Bot) GetMeWithContext(ctx context.Context) (*User, error) {
 		return nil, err
 	}
 
-	user, err := ParseRawResult[User](data)
+	user, err := ParseRawResult[User](bot, data)
 	if err != nil {
 		return nil, err
 
