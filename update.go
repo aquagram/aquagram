@@ -63,17 +63,24 @@ func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
 	}
 
 	for _, handler := range handlers {
+		var skipHandler bool
+
 		for _, middleware := range handler.Middlewares {
 			err := middleware(update)
 
 			if err != nil {
 				if errors.Is(err, ErrStopPropagation) {
-					return
+					skipHandler = true
+					break
 				}
 
 				bot.Logger.Printf("skiping handler execution due to a middleware error: %v\n", err)
 				return
 			}
+		}
+
+		if skipHandler {
+			continue
 		}
 
 		if err := handler.Callback(bot, update); err != nil {
