@@ -9,11 +9,11 @@ import (
 )
 
 type PollingOptions struct {
-	Offset             int           `json:"offset"`
-	Limit              int           `json:"limit"`
+	Offset             int           `json:"offset,omitempty"`
+	Limit              int           `json:"limit,omitempty"`
 	Timeout            time.Duration `json:"-"`
-	TimeoutRaw         int64         `json:"timeout"`
-	AllowedUpdates     []string      `json:"allowed_updates"`
+	TimeoutRaw         int64         `json:"timeout,omitempty"`
+	AllowedUpdates     []string      `json:"allowed_updates,omitempty"`
 	DropPendingUpdates bool          `json:"-"`
 }
 

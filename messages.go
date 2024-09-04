@@ -65,7 +65,7 @@ type SendMessageParams struct {
 	Entities             []MessageEntity  `json:"entities,omitempty"`
 	DisableNotification  bool             `json:"disable_notification,omitempty"`
 	ReplyParameters      *ReplyParameters `json:"reply_parameters,omitempty"`
-	ReplyMarkup          *ReplyMarkup     `json:"reply_markup,omitempty"`
+	ReplyMarkup          ReplyMarkup      `json:"reply_markup,omitempty"`
 }
 
 func (bot *Bot) SendMessage(chatID string, text string, params *SendMessageParams) (*Message, error) {

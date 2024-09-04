@@ -1,5 +1,10 @@
 package aquagram
 
+import (
+	"context"
+	"time"
+)
+
 // https://core.telegram.org/bots/api#callbackquery
 type CallbackQuery struct {
 	ID              string   `json:"id"`
@@ -9,6 +14,46 @@ type CallbackQuery struct {
 	ChatInstance    string   `json:"chat_instance"`
 	Data            string   `json:"data"`
 	GameShortName   string   `json:"game_short_name"`
+}
+
+// https://core.telegram.org/bots/api#answercallbackquery
+func (callback *CallbackQuery) Answer(bot *Bot, params *AnswerCallbackQueryParams) (bool, error) {
+	return bot.AnswerCallbackQuery(callback.ID, params)
+}
+
+type AnswerCallbackQueryParams struct {
+	CallbackQueryID string        `json:"callback_query_id"`
+	Text            string        `json:"text,omitempty"`
+	ShowAlert       bool          `json:"show_alert,omitempty"`
+	URL             string        `json:"url,omitempty"`
+	CacheTime       time.Duration `json:"-"`
+	CacheTimeRaw    int64         `json:"cache_time,omitempty"`
+}
+
+// https://core.telegram.org/bots/api#answercallbackquery
+func (bot *Bot) AnswerCallbackQuery(callbackQueryID string, params *AnswerCallbackQueryParams) (bool, error) {
+	return bot.AnswerCallbackQueryWithContext(bot.stopContext, callbackQueryID, params)
+}
+
+func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQueryID string, params *AnswerCallbackQueryParams) (bool, error) {
+	if params == nil {
+		params = new(AnswerCallbackQueryParams)
+	}
+
+	params.CallbackQueryID = callbackQueryID
+	params.CacheTimeRaw = int64(params.CacheTime.Seconds())
+
+	data, err := bot.Raw(ctx, "answerCallbackQuery", params)
+	if err != nil {
+		return false, err
+	}
+
+	success, err := ParseRawResult[bool](data)
+	if err != nil {
+		return false, err
+	}
+
+	return *success, nil
 }
 
 func (callback *CallbackQuery) GetMessage() *Message {
@@ -28,7 +73,7 @@ func (callback *CallbackQuery) GetChat() *Chat {
 }
 
 func (callback *CallbackQuery) GetCallbackQuery() *CallbackQuery {
-	return nil
+	return callback
 }
 
 func (callback *CallbackQuery) GetEntities() []*MessageEntity {

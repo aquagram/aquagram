@@ -75,6 +75,12 @@ func CommandMiddleware(bot *Bot, command string) Middleware {
 }
 
 func CallbackQueryMiddleware(callback string) Middleware {
+	isDynamic := strings.HasPrefix(callback, "~")
+
+	if isDynamic {
+		callback = callback[1:]
+	}
+
 	return func(event Event) error {
 		callbackQuery := event.GetCallbackQuery()
 
@@ -82,10 +88,14 @@ func CallbackQueryMiddleware(callback string) Middleware {
 			return ErrStopPropagation
 		}
 
-		if !strings.HasPrefix(callbackQuery.Data, callback) {
-			return ErrStopPropagation
+		if isDynamic && strings.HasPrefix(callbackQuery.Data, callback) {
+			return nil
 		}
 
-		return nil
+		if callbackQuery.Data == callback {
+			return nil
+		}
+
+		return ErrStopPropagation
 	}
 }
