@@ -24,7 +24,7 @@ func main() {
 	// handler scoped middleware
 	bot.OnCommand("start", StartCommandHandler, aquagram.UsersMiddleware(WhiteList...))
 
-	if err := bot.StartPolling(); err != nil {
+	if err := bot.StartPolling(true); err != nil {
 		panic(err)
 	}
 }

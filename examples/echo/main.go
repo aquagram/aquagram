@@ -33,7 +33,7 @@ func main() {
 	bot.OnCommand("start", StartCommandHandler)
 	bot.OnCommand("/hello", HelloCommandHandler)
 
-	if err := bot.StartPolling(); err != nil {
+	if err := bot.StartPolling(true); err != nil {
 		panic(err)
 	}
 }

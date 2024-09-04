@@ -64,8 +64,11 @@ func (bot *Bot) start() error {
 	return nil
 }
 
-func (bot *Bot) StartPolling() error {
-	return bot.StartPollingWithOptions(nil)
+func (bot *Bot) StartPolling(dropPendingUpdates bool) error {
+	options := new(PollingOptions)
+	options.DropPendingUpdates = dropPendingUpdates
+
+	return bot.StartPollingWithOptions(options)
 }
 
 func (bot *Bot) StartPollingWithOptions(options *PollingOptions) error {

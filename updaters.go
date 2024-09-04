@@ -9,11 +9,12 @@ import (
 )
 
 type PollingOptions struct {
-	Offset         int           `json:"offset"`
-	Limit          int           `json:"limit"`
-	Timeout        time.Duration `json:"-"`
-	TimeoutRaw     int64         `json:"timeout"`
-	AllowedUpdates []string      `json:"allowed_updates"`
+	Offset             int           `json:"offset"`
+	Limit              int           `json:"limit"`
+	Timeout            time.Duration `json:"-"`
+	TimeoutRaw         int64         `json:"timeout"`
+	AllowedUpdates     []string      `json:"allowed_updates"`
+	DropPendingUpdates bool          `json:"-"`
 }
 
 type Updates struct {
@@ -37,12 +38,26 @@ func (updater *PollingUpdater) Start() {
 		updater.Options = new(PollingOptions)
 	}
 
-	if updater.Options.Offset == 0 {
-		updater.Options.Offset = -1
-	}
-
 	if updater.Options.Timeout.Seconds() == 0 {
 		updater.Options.Timeout = 10 * time.Second
+	}
+
+	if updater.Options.DropPendingUpdates {
+		params := &PollingOptions{
+			Offset: -1,
+			Limit:  1,
+		}
+
+		updates, err := updater.Bot.GetUpdates(updater.Bot.stopContext, params)
+		if err != nil {
+			updater.Bot.Logger.Println(fmt.Errorf("%w: %w", ErrUpdaterError, err))
+
+		} else {
+			if len(updates) > 0 {
+				lastUpdate := updates[0]
+				updater.Options.Offset = lastUpdate.UpdateID + 1
+			}
+		}
 	}
 
 	for {
@@ -52,8 +67,6 @@ func (updater *PollingUpdater) Start() {
 		default:
 		}
 
-		updater.Options.Offset = updater.Bot.LastUpdateID + 1
-
 		updates, err := updater.Bot.GetUpdates(updater.Bot.stopContext, updater.Options)
 		if err != nil {
 			updater.Bot.Logger.Println(fmt.Errorf("%w: %w", ErrUpdaterError, err))
@@ -61,7 +74,7 @@ func (updater *PollingUpdater) Start() {
 		}
 
 		for _, update := range updates {
-			updater.Bot.LastUpdateID = update.UpdateID
+			updater.Options.Offset = update.UpdateID + 1
 			updater.Bot.DispatchUpdate(update)
 		}
 	}
