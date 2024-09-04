@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -35,7 +34,7 @@ func ParseRawResult[T any](data []byte) (*T, error) {
 	}
 
 	if message, ok := any(res.Result).(*Message); ok {
-		message.Time = time.Unix(message.Date, 0)
+		message.process()
 	}
 
 	return res.Result, nil

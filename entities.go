@@ -27,6 +27,8 @@ const (
 
 // https://core.telegram.org/bots/api#messageentity
 type MessageEntity struct {
+	Message *Message `json:"-"`
+
 	Type          EntityType `json:"type"`
 	Offset        int        `json:"offset"`
 	Length        int        `json:"length"`
@@ -34,4 +36,36 @@ type MessageEntity struct {
 	User          *User      `json:"user,omitempty"`
 	Language      string     `json:"language,omitempty"`
 	CustomEmojiID string     `json:"custom_emoji_id,omitempty"`
+}
+
+func (entity *MessageEntity) Text() (text string) {
+	var str string
+
+	if entity.Message == nil {
+		return
+	}
+
+	if entity.Message.Text != EmptyString {
+		str = entity.Message.Text
+	} else if entity.Message.Caption != EmptyString {
+		str = entity.Message.Caption
+	} else {
+		return
+	}
+
+	stopIndex := entity.Offset + entity.Length
+
+	for runeIndex, runeValue := range []rune(str) {
+		if runeIndex < entity.Offset {
+			continue
+		}
+
+		if runeIndex == stopIndex {
+			break
+		}
+
+		text += string(runeValue)
+	}
+
+	return
 }

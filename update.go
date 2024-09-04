@@ -89,6 +89,7 @@ func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
 func (bot *Bot) DispatchUpdate(update *Update) {
 	if update.Message != nil {
 		message := update.Message
+		message.process()
 
 		bot.HandleUpdate(OnMessage, message)
 

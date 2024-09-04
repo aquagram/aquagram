@@ -2,7 +2,6 @@ package aquagram
 
 import (
 	"context"
-	"time"
 )
 
 // TODO implement all fields
@@ -31,8 +30,8 @@ type Message struct {
 	MediaGroupID          string              `json:"media_group_id,omitempty"`
 	AuthorSignature       string              `json:"author_signature,omitempty"`
 	Text                  string              `json:"text"`
-	Entities              []MessageEntity     `json:"entities,omitempty"`
-	LinkPreviewOptions    *LinkPreviewOptions `json:"link_preview_options"`
+	Entities              []*MessageEntity    `json:"entities,omitempty"`
+	LinkPreviewOptions    *LinkPreviewOptions `json:"link_preview_options,omitempty"`
 	EffectID              string              `json:"effect_id,omitempty"`
 	Animation             *Animation          `json:"animation,omitempty"`
 	Audio                 *Audio              `json:"audio,omitempty"`
@@ -45,11 +44,9 @@ type Message struct {
 	VideoNote             *VideoNote          `json:"video_note,omitempty"`
 	Voice                 *Voice              `json:"voice,omitempty"`
 	Caption               string              `json:"caption,omitempty"`
-	CaptionEntities       []MessageEntity     `json:"caption_entities,omitempty"`
+	CaptionEntities       []*MessageEntity    `json:"caption_entities,omitempty"`
 	ShowCaptionAboveMedia bool                `json:"show_caption_above_media,omitempty"`
 	HasMediaSpoiler       bool                `json:"has_media_spoiler,omitempty"`
-
-	Time time.Time `json:"-"`
 }
 
 type MessageOrigin struct{}
@@ -126,6 +123,16 @@ func (message *Message) GetCallbackQuery() *CallbackQuery {
 	return nil
 }
 
-func (message *Message) GetEntities() []MessageEntity {
+func (message *Message) GetEntities() []*MessageEntity {
 	return message.Entities
+}
+
+func (message *Message) process() {
+	for _, entity := range message.Entities {
+		entity.Message = message
+	}
+
+	for _, entity := range message.CaptionEntities {
+		entity.Message = message
+	}
 }

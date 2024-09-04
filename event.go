@@ -5,5 +5,5 @@ type Event interface {
 	GetCallbackQuery() *CallbackQuery
 	GetFrom() *User
 	GetChat() *Chat
-	GetEntities() []MessageEntity
+	GetEntities() []*MessageEntity
 }

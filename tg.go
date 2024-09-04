@@ -31,7 +31,7 @@ func (callback *CallbackQuery) GetCallbackQuery() *CallbackQuery {
 	return nil
 }
 
-func (callback *CallbackQuery) GetEntities() []MessageEntity {
+func (callback *CallbackQuery) GetEntities() []*MessageEntity {
 	return nil
 }
 
