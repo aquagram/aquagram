@@ -3,6 +3,7 @@ package aquagram
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -61,21 +62,20 @@ func (updater *PollingUpdater) Start() {
 	}
 
 	for {
-		select {
-		case <-updater.Bot.stopContext.Done():
-			break
-		default:
-		}
-
 		updates, err := updater.Bot.GetUpdates(updater.Bot.stopContext, updater.Options)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				updater.Bot.Logger.Println("bot manually stopped")
+				break
+			}
+
 			updater.Bot.Logger.Println(fmt.Errorf("%w: %w", ErrUpdaterError, err))
 			continue
 		}
 
 		for _, update := range updates {
 			updater.Options.Offset = update.UpdateID + 1
-			updater.Bot.DispatchUpdate(update)
+			go updater.Bot.DispatchUpdate(update)
 		}
 	}
 }
@@ -137,5 +137,5 @@ func (updater *WebhookUpdater) Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updater.Bot.DispatchUpdate(update)
+	go updater.Bot.DispatchUpdate(update)
 }
