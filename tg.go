@@ -9,11 +9,15 @@ import (
 type CallbackQuery struct {
 	ID              string   `json:"id"`
 	From            *User    `json:"from"`
-	Message         *Message `json:"callback"` // https://core.telegram.org/bots/api#maybeinaccessiblemessage
+	Message         *Message `json:"message"` // https://core.telegram.org/bots/api#maybeinaccessiblemessage
 	InlineMessageID string   `json:"inline_callback_id"`
 	ChatInstance    string   `json:"chat_instance"`
 	Data            string   `json:"data"`
 	GameShortName   string   `json:"game_short_name"`
+}
+
+func (callback *CallbackQuery) IsMessageInaccessible() bool {
+	return callback.Message == nil
 }
 
 // https://core.telegram.org/bots/api#answercallbackquery
