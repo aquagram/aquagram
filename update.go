@@ -151,6 +151,7 @@ func (bot *Bot) DispatchUpdate(update *Update) {
 	}
 
 	if update.CallbackQuery != nil {
+		update.CallbackQuery.process(bot)
 		bot.HandleUpdate(OnCallbackQuery, update.CallbackQuery)
 	}
 }

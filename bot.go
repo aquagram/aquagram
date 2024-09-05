@@ -2,7 +2,6 @@ package aquagram
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -98,6 +97,11 @@ func (bot *Bot) Stop() {
 	bot.stopFunc()
 }
 
+/*
+A simple method for testing your bot's authentication token.
+
+https://core.telegram.org/bots/api#getme
+*/
 func (bot *Bot) GetMe() (*User, error) {
 	return bot.GetMeWithContext(bot.stopContext)
 }
@@ -119,6 +123,30 @@ func (bot *Bot) GetMeWithContext(ctx context.Context) (*User, error) {
 	return user, nil
 }
 
-func (bot *Bot) methodUrl(method string) string {
-	return fmt.Sprintf("%s/bot%s/%s", bot.ApiUrl, bot.token, method)
+/*
+Use this method to log out from the cloud Bot API server before launching the bot locally.
+
+https://core.telegram.org/bots/api#logout
+*/
+func (bot *Bot) LogOut() error {
+	return bot.LogOutWithContext(bot.stopContext)
+}
+
+func (bot *Bot) LogOutWithContext(ctx context.Context) error {
+	_, err := bot.Raw(ctx, "logOut", nil)
+	return err
+}
+
+/*
+Use this method to close the bot instance before moving it from one local server to another.
+
+https://core.telegram.org/bots/api#close
+*/
+func (bot *Bot) Close() error {
+	return bot.CloseWithContext(bot.stopContext)
+}
+
+func (bot *Bot) CloseWithContext(ctx context.Context) error {
+	_, err := bot.Raw(ctx, "close", nil)
+	return err
 }

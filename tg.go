@@ -5,24 +5,23 @@ import (
 	"time"
 )
 
+type MaybeInaccessibleMessage = Message
+
 // https://core.telegram.org/bots/api#callbackquery
 type CallbackQuery struct {
-	ID              string   `json:"id"`
-	From            *User    `json:"from"`
-	Message         *Message `json:"message"` // https://core.telegram.org/bots/api#maybeinaccessiblemessage
-	InlineMessageID string   `json:"inline_callback_id"`
-	ChatInstance    string   `json:"chat_instance"`
-	Data            string   `json:"data"`
-	GameShortName   string   `json:"game_short_name"`
+	Bot *Bot `json:"-"`
+
+	ID              string                    `json:"id"`
+	From            *User                     `json:"from"`
+	Message         *MaybeInaccessibleMessage `json:"message"`
+	InlineMessageID string                    `json:"inline_callback_id"`
+	ChatInstance    string                    `json:"chat_instance"`
+	Data            string                    `json:"data"`
+	GameShortName   string                    `json:"game_short_name"`
 }
 
 func (callback *CallbackQuery) IsMessageInaccessible() bool {
 	return callback.Message == nil
-}
-
-// https://core.telegram.org/bots/api#answercallbackquery
-func (callback *CallbackQuery) Answer(bot *Bot, params *AnswerCallbackQueryParams) (bool, error) {
-	return bot.AnswerCallbackQuery(callback.ID, params)
 }
 
 type AnswerCallbackQueryParams struct {
@@ -34,12 +33,31 @@ type AnswerCallbackQueryParams struct {
 	CacheTimeRaw    int64         `json:"cache_time,omitempty"`
 }
 
+/*
+[Answer] is an alias for [AnswerCallbackQuery]
+*/
+func (callback *CallbackQuery) Answer(params *AnswerCallbackQueryParams) error {
+	return callback.Bot.AnswerCallbackQuery(callback.ID, params)
+}
+
 // https://core.telegram.org/bots/api#answercallbackquery
-func (bot *Bot) AnswerCallbackQuery(callbackQueryID string, params *AnswerCallbackQueryParams) (bool, error) {
+/*
+
+ */
+func (bot *Bot) AnswerCallbackQuery(callbackQueryID string, params *AnswerCallbackQueryParams) error {
 	return bot.AnswerCallbackQueryWithContext(bot.stopContext, callbackQueryID, params)
 }
 
-func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQueryID string, params *AnswerCallbackQueryParams) (bool, error) {
+/*
+[answerCallbackQuery] - Use this method to send answers to callback queries sent from inline keyboards.
+
+The answer will be displayed to the user as a notification at the top of the chat screen or as an alert.
+
+On success, a nil error is returned.
+
+[answerCallbackQuery]: https://core.telegram.org/bots/api#answercallbackquery
+*/
+func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQueryID string, params *AnswerCallbackQueryParams) error {
 	if params == nil {
 		params = new(AnswerCallbackQueryParams)
 	}
@@ -49,15 +67,19 @@ func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQuer
 
 	data, err := bot.Raw(ctx, "answerCallbackQuery", params)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	success, err := ParseRawResult[bool](bot, data)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return *success, nil
+	if !*success {
+		return ErrExpectedTrue
+	}
+
+	return nil
 }
 
 func (callback *CallbackQuery) GetMessage() *Message {

@@ -16,7 +16,8 @@ var (
 
 	// telegram errors
 	ErrTelegramError = errors.New("telegram error")
-	ErrTgBadRequest  = fmt.Errorf("%w: telegram: bad request", ErrTelegramError)
+	ErrTgBadRequest  = fmt.Errorf("%w: bad request", ErrTelegramError)
+	ErrExpectedTrue  = fmt.Errorf("%w: the result is not true", ErrTelegramError)
 
 	ErrUpdaterError = errors.New("updater error")
 )

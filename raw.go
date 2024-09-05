@@ -17,9 +17,8 @@ type TelegramResponse struct {
 	Description string `json:"description"`
 }
 
-type RawParams interface {
-	GetParams() (map[string]string, error)
-	GetFiles() (map[string]*InputFile, error)
+func (bot *Bot) methodUrl(method string) string {
+	return fmt.Sprintf("%s/bot%s/%s", bot.ApiUrl, bot.token, method)
 }
 
 func (bot *Bot) Raw(ctx context.Context, method string, params any) ([]byte, error) {
