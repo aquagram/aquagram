@@ -2,7 +2,7 @@ package aquagram
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"strconv"
 	"strings"
 )
@@ -13,31 +13,34 @@ const (
 	FalseAsString string = "false"
 )
 
-func ParseRawResult[T any](bot *Bot, data []byte) (*T, error) {
+func ParseRawResult[T any](bot *Bot, data []byte) (result T, err error) {
 	var res struct {
 		Ok          bool   `json:"ok"`
-		Result      *T     `json:"result"`
+		Result      T      `json:"result"`
 		ErrorCode   int    `json:"error_code"`
 		Description string `json:"description"`
 	}
 
-	if err := json.Unmarshal(data, &res); err != nil {
-		return nil, err
+	if err = json.Unmarshal(data, &res); err != nil {
+		return
 	}
 
 	if !res.Ok {
 		if res.ErrorCode != 0 {
-			return nil, errTgBadRequest(res.ErrorCode, res.Description)
+			err = errTgBadRequest(res.ErrorCode, res.Description)
+			return
 		}
 
-		return nil, fmt.Errorf("unknown error parsing raw result: %s", string(data))
+		err = errors.New("unknown error parsing raw result: " + string(data))
+		return
 	}
 
-	if message, ok := any(res.Result).(*Message); ok {
+	if message, ok := any(&res.Result).(*Message); ok {
 		message.process(bot)
 	}
 
-	return res.Result, nil
+	result = res.Result
+	return
 }
 
 func ParseChatID(chatID string) string {

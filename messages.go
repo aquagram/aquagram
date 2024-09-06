@@ -100,7 +100,7 @@ type SendMessageParams struct {
 /*
 [Reply] is an alias for [SendMessage].
 */
-func (message *Message) Reply(text string, params *SendMessageParams) (*Message, error) {
+func (message *Message) Reply(text string, params *SendMessageParams) (Message, error) {
 	if params == nil {
 		params = new(SendMessageParams)
 	}
@@ -117,7 +117,7 @@ func (message *Message) Reply(text string, params *SendMessageParams) (*Message,
 /*
 [SendMessage] wraps [SendMessageWithContext] using the default bot context.
 */
-func (bot *Bot) SendMessage(chatID string, text string, params *SendMessageParams) (*Message, error) {
+func (bot *Bot) SendMessage(chatID string, text string, params *SendMessageParams) (Message, error) {
 	return bot.SendMessageWithContext(bot.stopContext, chatID, text, params)
 }
 
@@ -126,7 +126,7 @@ func (bot *Bot) SendMessage(chatID string, text string, params *SendMessageParam
 
 [sendMessage]: https://core.telegram.org/bots/api#sendmessage
 */
-func (bot *Bot) SendMessageWithContext(ctx context.Context, chatID string, text string, params *SendMessageParams) (*Message, error) {
+func (bot *Bot) SendMessageWithContext(ctx context.Context, chatID string, text string, params *SendMessageParams) (message Message, err error) {
 	if params == nil {
 		params = new(SendMessageParams)
 	}
@@ -134,9 +134,9 @@ func (bot *Bot) SendMessageWithContext(ctx context.Context, chatID string, text 
 	params.ChatID = ParseChatID(chatID)
 	params.Text = text
 
-	data, err := bot.Raw(ctx, "sendMessage", params)
-	if err != nil {
-		return nil, err
+	var data []byte
+	if data, err = bot.Raw(ctx, "sendMessage", params); err != nil {
+		return
 	}
 
 	return ParseRawResult[Message](bot, data)
@@ -158,14 +158,14 @@ type ForwardMessageParams struct {
 /*
 [Forward] is an alias for [ForwardMessage].
 */
-func (message *Message) Forward(chatID string, params *ForwardMessageParams) (*Message, error) {
+func (message *Message) Forward(chatID string, params *ForwardMessageParams) (Message, error) {
 	return message.Bot.ForwardMessage(chatID, ChatID(message.Chat.ID), message.MessageID, params)
 }
 
 /*
 [ForwardMessage] wraps [ForwardMessageWithContext] using the default bot context.
 */
-func (bot *Bot) ForwardMessage(chatID string, fromChatID string, messageID int64, params *ForwardMessageParams) (*Message, error) {
+func (bot *Bot) ForwardMessage(chatID string, fromChatID string, messageID int64, params *ForwardMessageParams) (Message, error) {
 	return bot.ForwardMessageWithContext(bot.stopContext, chatID, fromChatID, messageID, params)
 }
 
@@ -178,7 +178,7 @@ On success, the sent Message is returned.
 
 [forwardMessage]: https://core.telegram.org/bots/api#forwardmessage
 */
-func (bot *Bot) ForwardMessageWithContext(ctx context.Context, chatID string, fromChatID string, messageID int64, params *ForwardMessageParams) (*Message, error) {
+func (bot *Bot) ForwardMessageWithContext(ctx context.Context, chatID string, fromChatID string, messageID int64, params *ForwardMessageParams) (message Message, err error) {
 	if params == nil {
 		params = new(ForwardMessageParams)
 	}
@@ -187,9 +187,9 @@ func (bot *Bot) ForwardMessageWithContext(ctx context.Context, chatID string, fr
 	params.FromChatID = ParseChatID(fromChatID)
 	params.MessageID = messageID
 
-	data, err := bot.Raw(ctx, "forwardMessage", params)
-	if err != nil {
-		return nil, err
+	var data []byte
+	if data, err = bot.Raw(ctx, "forwardMessage", params); err != nil {
+		return
 	}
 
 	return ParseRawResult[Message](bot, data)
@@ -236,7 +236,7 @@ func (bot *Bot) ForwardMessagesWithContext(ctx context.Context, chatID string, f
 
 	var intArr []int64
 
-	for _, result := range *ids {
+	for _, result := range ids {
 		intArr = append(intArr, result.MessageID)
 	}
 
@@ -347,7 +347,7 @@ func (bot *Bot) CopyMessagesWithContext(ctx context.Context, chatID string, from
 
 	var intArr []int64
 
-	for _, result := range *ids {
+	for _, result := range ids {
 		intArr = append(intArr, result.MessageID)
 	}
 
@@ -366,14 +366,14 @@ type EditMessageParams struct {
 	ReplyMarkup          ReplyMarkup         `json:"reply_markup,omitempty"`
 }
 
-func (message *Message) EditText(text string, params *EditMessageParams) (*Message, error) {
+func (message *Message) EditText(text string, params *EditMessageParams) (Message, error) {
 	return message.Bot.EditMessageText(ChatID(message.Chat.ID), message.MessageID, text, params)
 }
 
 /*
 [CopyMessage] wraps [CopyMessageWithContext] using the default bot context.
 */
-func (bot *Bot) EditMessageText(chatID string, messageID int64, text string, params *EditMessageParams) (*Message, error) {
+func (bot *Bot) EditMessageText(chatID string, messageID int64, text string, params *EditMessageParams) (Message, error) {
 	return bot.EditMessageTextWithContext(bot.stopContext, chatID, messageID, text, params)
 }
 
@@ -384,7 +384,7 @@ On success, if the edited message is not an inline message, the edited Message i
 
 [editMessageText]: https://core.telegram.org/bots/api#editmessagetext
 */
-func (bot *Bot) EditMessageTextWithContext(ctx context.Context, chatID string, messageID int64, text string, params *EditMessageParams) (*Message, error) {
+func (bot *Bot) EditMessageTextWithContext(ctx context.Context, chatID string, messageID int64, text string, params *EditMessageParams) (message Message, err error) {
 	if params == nil {
 		params = new(EditMessageParams)
 	}
@@ -393,9 +393,9 @@ func (bot *Bot) EditMessageTextWithContext(ctx context.Context, chatID string, m
 	params.MessageID = messageID
 	params.Text = text
 
-	data, err := bot.Raw(ctx, "editMessageText", params)
-	if err != nil {
-		return nil, err
+	var data []byte
+	if data, err = bot.Raw(ctx, "editMessageText", params); err != nil {
+		return
 	}
 
 	return ParseRawResult[Message](bot, data)
@@ -430,27 +430,23 @@ Returns a nil error on success.
 
 [deleteMessage]: https://core.telegram.org/bots/api#deletemessage
 */
-func (bot *Bot) DeleteMessageWithContext(ctx context.Context, chatID string, messageID int64) error {
+func (bot *Bot) DeleteMessageWithContext(ctx context.Context, chatID string, messageID int64) (err error) {
 	params := map[string]any{
 		"chat_id":    chatID,
 		"message_id": messageID,
 	}
 
-	data, err := bot.Raw(ctx, "deleteMessage", params)
-	if err != nil {
-		return err
+	var data []byte
+	if data, err = bot.Raw(ctx, "deleteMessage", params); err != nil {
+		return
 	}
 
-	success, err := ParseRawResult[bool](bot, data)
-	if err != nil {
-		return err
-	}
-
-	if !*success {
+	var success bool
+	if success, err = ParseRawResult[bool](bot, data); !success {
 		return ErrExpectedTrue
 	}
 
-	return nil
+	return
 }
 
 /*
@@ -469,25 +465,21 @@ Returns a nil error on success.
 
 [deleteMessages]: https://core.telegram.org/bots/api#deletemessages
 */
-func (bot *Bot) DeleteMessagesWithContext(ctx context.Context, chatID string, messageIDs []int) error {
+func (bot *Bot) DeleteMessagesWithContext(ctx context.Context, chatID string, messageIDs []int) (err error) {
 	params := map[string]any{
 		"chat_id":     chatID,
 		"message_ids": messageIDs,
 	}
 
-	data, err := bot.Raw(bot.stopContext, "deleteMessages", params)
-	if err != nil {
-		return err
+	var data []byte
+	if data, err = bot.Raw(bot.stopContext, "deleteMessages", params); err != nil {
+		return
 	}
 
-	success, err := ParseRawResult[bool](bot, data)
-	if err != nil {
-		return err
-	}
-
-	if !*success {
+	var success bool
+	if success, err = ParseRawResult[bool](bot, data); !success {
 		return ErrExpectedTrue
 	}
 
-	return nil
+	return
 }

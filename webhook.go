@@ -28,9 +28,7 @@ type SetWebhookParams struct {
 }
 
 // https://core.telegram.org/bots/api#setwebhook
-func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) (bool, error) {
-	var success bool
-
+func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) (success bool, err error) {
 	if params == nil {
 		params = new(SetWebhookParams)
 	}
@@ -38,47 +36,32 @@ func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) (bool, error) {
 	params.URL = url
 
 	if params.Certificate != nil {
-		paramsMap, err := params.ToParams()
-		if err != nil {
-			return success, err
+		var paramsMap Params
+		if paramsMap, err = params.ToParams(); err != nil {
+			return
 		}
 
 		files := make(Files)
 		files["certificate"] = params.Certificate
 
-		data, err := bot.RawFile(bot.stopContext, "setWebhook", paramsMap, files)
-		if err != nil {
-			return success, err
+		var data []byte
+		if data, err = bot.RawFile(bot.stopContext, "setWebhook", paramsMap, files); err != nil {
+			return
 		}
 
-		result, err := ParseRawResult[bool](bot, data)
-		if err != nil {
-			return success, err
-		}
-
-		success = *result
-
-		return success, nil
+		return ParseRawResult[bool](bot, data)
 	}
 
-	data, err := bot.Raw(bot.stopContext, "setWebhook", params)
-	if err != nil {
-		return success, err
+	var data []byte
+	if data, err = bot.Raw(bot.stopContext, "setWebhook", params); err != nil {
+		return
 	}
 
-	result, err := ParseRawResult[bool](bot, data)
-	if err != nil {
-		return success, err
-	}
-
-	success = *result
-
-	return success, nil
+	return ParseRawResult[bool](bot, data)
 }
 
 // https://core.telegram.org/bots/api#deletewebhook
-func (bot *Bot) DeleteWebhook(dropPendingUpdates bool) (bool, error) {
-	var success bool
+func (bot *Bot) DeleteWebhook(dropPendingUpdates bool) (success bool, err error) {
 	var params Params
 
 	if dropPendingUpdates {
@@ -86,26 +69,19 @@ func (bot *Bot) DeleteWebhook(dropPendingUpdates bool) (bool, error) {
 		params["drop_pending_updates"] = TrueAsString
 	}
 
-	data, err := bot.Raw(bot.stopContext, "deleteWebhook", params)
-	if err != nil {
-		return success, err
+	var data []byte
+	if data, err = bot.Raw(bot.stopContext, "deleteWebhook", params); err != nil {
+		return
 	}
 
-	result, err := ParseRawResult[bool](bot, data)
-	if err != nil {
-		return success, err
-	}
-
-	success = *result
-
-	return success, nil
+	return ParseRawResult[bool](bot, data)
 }
 
 // https://core.telegram.org/bots/api#getwebhookinfo
-func (bot *Bot) GetWebhookInfo() (*WebhookInfo, error) {
-	data, err := bot.Raw(bot.stopContext, "getWebhookInfo", nil)
-	if err != nil {
-		return nil, err
+func (bot *Bot) GetWebhookInfo() (info WebhookInfo, err error) {
+	var data []byte
+	if data, err = bot.Raw(bot.stopContext, "getWebhookInfo", nil); err != nil {
+		return
 	}
 
 	return ParseRawResult[WebhookInfo](bot, data)
