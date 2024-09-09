@@ -9,7 +9,7 @@ import (
 type SendMediaGroupParams struct {
 	BusinessConnectionID string           `json:"business_connection_id,omitempty"`
 	ChatID               string           `json:"chat_id"`
-	MessageThreadID      int              `json:"message_thread_id,omitempty"`
+	MessageThreadID      int64            `json:"message_thread_id,omitempty"`
 	Media                []*InputFile     `json:"media"`
 	DisableNotification  bool             `json:"disable_notification,omitempty"`
 	ProtectContent       bool             `json:"protect_content,omitempty"`

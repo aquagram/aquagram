@@ -11,7 +11,7 @@ type CommonSendParams struct {
 	ChatID                      string           `json:"chat_id"`
 	Text                        string           `json:"text"`
 	BusinessConnectionID        string           `json:"business_connection_id,omitempty"`
-	MessageThreadID             int              `json:"message_thread_id,omitempty"`
+	MessageThreadID             int64            `json:"message_thread_id,omitempty"`
 	ParseMode                   ParseMode        `json:"parse_mode,omitempty"`
 	Entities                    []MessageEntity  `json:"entities,omitempty"`
 	DisableNotification         bool             `json:"disable_notification,omitempty"`
@@ -39,7 +39,7 @@ func (p *CommonSendParams) ToParams() (Params, error) {
 	}
 
 	if p.MessageThreadID != 0 {
-		params["message_thread_id"] = strconv.Itoa(p.MessageThreadID)
+		params["message_thread_id"] = strconv.FormatInt(p.MessageThreadID, 10)
 	}
 
 	if string(p.ParseMode) != EmptyString {

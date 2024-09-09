@@ -2,7 +2,7 @@ package aquagram
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 )
 
 type ChatType string
@@ -36,7 +36,7 @@ type Chat struct {
 }
 
 func ChatID(id int64) string {
-	return fmt.Sprintf("%d", id)
+	return strconv.FormatInt(id, 10)
 }
 
 func (chat *Chat) IsPrivate() bool {
@@ -126,17 +126,15 @@ type ChatMemberRestrictedPermissions struct {
 	//CanChangeInfo         bool `json:"can_change_info"`
 }
 
-func (bot *Bot) GetChatMember(chatID string, userID int) (*ChatMember, error) {
+func (bot *Bot) GetChatMember(chatID string, userID int64) (*ChatMember, error) {
 	return bot.GetChatMemberWithContext(bot.stopContext, chatID, userID)
 }
 
-func (bot *Bot) GetChatMemberWithContext(ctx context.Context, chatID string, userID int) (*ChatMember, error) {
+func (bot *Bot) GetChatMemberWithContext(ctx context.Context, chatID string, userID int64) (*ChatMember, error) {
 	params := map[string]any{
 		"chat_id": chatID,
 		"user_id": userID,
 	}
-
-	var data []byte
 
 	data, err := bot.Raw(ctx, "getChatMember", params)
 	if err != nil {

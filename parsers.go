@@ -44,7 +44,7 @@ func ParseChatID(chatID string) string {
 	at := "@"
 
 	if !strings.HasPrefix(chatID, at) {
-		_, err := strconv.ParseInt(chatID, 0, 0)
+		_, err := strconv.ParseInt(chatID, 10, 0)
 		if err != nil {
 			chatID = at + chatID
 		}

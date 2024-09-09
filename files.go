@@ -6,7 +6,7 @@ import (
 
 type SendDocumentParams struct {
 	BusinessConnectionID        string           `json:"business_connection_id,omitempty"`
-	MessageThreadID             int              `json:"message_thread_id,omitempty"`
+	MessageThreadID             int64            `json:"message_thread_id,omitempty"`
 	Document                    *InputFile       `json:"document"`
 	Thumbnail                   *InputFile       `json:"thumbnail,omitempty"`
 	Caption                     string           `json:"caption,omitempty"`
@@ -66,7 +66,7 @@ func (bot *Bot) SendDocumentWithContext(ctx context.Context, chatID string, docu
 type SendPhotoParams struct {
 	BusinessConnectionID        string           `json:"business_connection_id,omitempty"`
 	ChatID                      string           `json:"chat_id"`
-	MessageThreadID             int              `json:"message_thread_id,omitempty"`
+	MessageThreadID             int64            `json:"message_thread_id,omitempty"`
 	Photo                       *InputFile       `json:"photo"`
 	Thumbnail                   *InputFile       `json:"thumbnail,omitempty"`
 	Caption                     string           `json:"caption,omitempty"`
