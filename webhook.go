@@ -28,9 +28,7 @@ type SetWebhookParams struct {
 }
 
 // https://core.telegram.org/bots/api#setwebhook
-func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) (bool, error) {
-	var success bool
-
+func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) error {
 	if params == nil {
 		params = new(SetWebhookParams)
 	}
@@ -40,7 +38,7 @@ func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) (bool, error) {
 	if params.Certificate != nil {
 		paramsMap, err := params.ToParams()
 		if err != nil {
-			return success, err
+			return err
 		}
 
 		files := make(Files)
@@ -48,37 +46,38 @@ func (bot *Bot) SetWebhook(url string, params *SetWebhookParams) (bool, error) {
 
 		data, err := bot.RawFile(bot.stopContext, "setWebhook", paramsMap, files)
 		if err != nil {
-			return success, err
+			return err
 		}
 
-		result, err := ParseRawResult[bool](bot, data)
+		success, err := ParseRawResult[bool](bot, data)
 		if err != nil {
-			return success, err
+			return err
 		}
 
-		success = *result
-
-		return success, nil
+		if !success {
+			return ErrExpectedTrue
+		}
 	}
 
 	data, err := bot.Raw(bot.stopContext, "setWebhook", params)
 	if err != nil {
-		return success, err
+		return err
 	}
 
-	result, err := ParseRawResult[bool](bot, data)
+	success, err := ParseRawResult[bool](bot, data)
 	if err != nil {
-		return success, err
+		return err
 	}
 
-	success = *result
+	if !success {
+		return ErrExpectedTrue
+	}
 
-	return success, nil
+	return nil
 }
 
 // https://core.telegram.org/bots/api#deletewebhook
-func (bot *Bot) DeleteWebhook(dropPendingUpdates bool) (bool, error) {
-	var success bool
+func (bot *Bot) DeleteWebhook(dropPendingUpdates bool) error {
 	var params Params
 
 	if dropPendingUpdates {
@@ -88,17 +87,19 @@ func (bot *Bot) DeleteWebhook(dropPendingUpdates bool) (bool, error) {
 
 	data, err := bot.Raw(bot.stopContext, "deleteWebhook", params)
 	if err != nil {
-		return success, err
+		return err
 	}
 
-	result, err := ParseRawResult[bool](bot, data)
+	success, err := ParseRawResult[bool](bot, data)
 	if err != nil {
-		return success, err
+		return err
 	}
 
-	success = *result
+	if !success {
+		return ErrExpectedTrue
+	}
 
-	return success, nil
+	return nil
 }
 
 // https://core.telegram.org/bots/api#getwebhookinfo
@@ -108,7 +109,7 @@ func (bot *Bot) GetWebhookInfo() (*WebhookInfo, error) {
 		return nil, err
 	}
 
-	return ParseRawResult[WebhookInfo](bot, data)
+	return ParseRawResult[*WebhookInfo](bot, data)
 }
 
 func (p *SetWebhookParams) ToParams() (Params, error) {

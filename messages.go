@@ -139,7 +139,7 @@ func (bot *Bot) SendMessageWithContext(ctx context.Context, chatID string, text 
 		return nil, err
 	}
 
-	return ParseRawResult[Message](bot, data)
+	return ParseRawResult[*Message](bot, data)
 }
 
 type ForwardParams struct {
@@ -192,7 +192,7 @@ func (bot *Bot) ForwardMessageWithContext(ctx context.Context, chatID string, fr
 		return nil, err
 	}
 
-	return ParseRawResult[Message](bot, data)
+	return ParseRawResult[*Message](bot, data)
 }
 
 type ForwardMessagesParams struct {
@@ -236,7 +236,7 @@ func (bot *Bot) ForwardMessagesWithContext(ctx context.Context, chatID string, f
 
 	var intArr []int64
 
-	for _, result := range *ids {
+	for _, result := range ids {
 		intArr = append(intArr, result.MessageID)
 	}
 
@@ -347,7 +347,7 @@ func (bot *Bot) CopyMessagesWithContext(ctx context.Context, chatID string, from
 
 	var intArr []int64
 
-	for _, result := range *ids {
+	for _, result := range ids {
 		intArr = append(intArr, result.MessageID)
 	}
 
@@ -398,7 +398,7 @@ func (bot *Bot) EditMessageTextWithContext(ctx context.Context, chatID string, m
 		return nil, err
 	}
 
-	return ParseRawResult[Message](bot, data)
+	return ParseRawResult[*Message](bot, data)
 }
 
 /*
@@ -446,7 +446,7 @@ func (bot *Bot) DeleteMessageWithContext(ctx context.Context, chatID string, mes
 		return err
 	}
 
-	if !*success {
+	if !success {
 		return ErrExpectedTrue
 	}
 
@@ -485,7 +485,7 @@ func (bot *Bot) DeleteMessagesWithContext(ctx context.Context, chatID string, me
 		return err
 	}
 
-	if !*success {
+	if !success {
 		return ErrExpectedTrue
 	}
 

@@ -136,15 +136,12 @@ func (bot *Bot) GetChatMemberWithContext(ctx context.Context, chatID string, use
 		"user_id": userID,
 	}
 
+	var data []byte
+
 	data, err := bot.Raw(ctx, "getChatMember", params)
 	if err != nil {
 		return nil, err
 	}
 
-	member, err := ParseRawResult[ChatMember](bot, data)
-	if err != nil {
-		return nil, err
-	}
-
-	return member, nil
+	return ParseRawResult[*ChatMember](bot, data)
 }

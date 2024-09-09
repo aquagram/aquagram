@@ -79,12 +79,7 @@ func (bot *Bot) SendMediaGroupWithContext(ctx context.Context, chatID string, me
 			return nil, err
 		}
 
-		messages, err := ParseRawResult[[]*Message](bot, data)
-		if err != nil {
-			return nil, err
-		}
-
-		return *messages, nil
+		return ParseRawResult[[]*Message](bot, data)
 	}
 
 	data, err := bot.RawFile(ctx, "sendMediaGroup", paramsMap, files)
@@ -92,10 +87,5 @@ func (bot *Bot) SendMediaGroupWithContext(ctx context.Context, chatID string, me
 		return nil, err
 	}
 
-	messages, err := ParseRawResult[[]*Message](bot, data)
-	if err != nil {
-		return nil, err
-	}
-
-	return *messages, nil
+	return ParseRawResult[[]*Message](bot, data)
 }

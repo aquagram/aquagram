@@ -75,7 +75,7 @@ func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQuer
 		return err
 	}
 
-	if !*success {
+	if !success {
 		return ErrExpectedTrue
 	}
 
