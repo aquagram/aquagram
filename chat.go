@@ -126,20 +126,22 @@ type ChatMemberRestrictedPermissions struct {
 	//CanChangeInfo         bool `json:"can_change_info"`
 }
 
-func (bot *Bot) GetChatMember(chatID string, userID int) (ChatMember, error) {
+func (bot *Bot) GetChatMember(chatID string, userID int) (*ChatMember, error) {
 	return bot.GetChatMemberWithContext(bot.stopContext, chatID, userID)
 }
 
-func (bot *Bot) GetChatMemberWithContext(ctx context.Context, chatID string, userID int) (chatMember ChatMember, err error) {
+func (bot *Bot) GetChatMemberWithContext(ctx context.Context, chatID string, userID int) (*ChatMember, error) {
 	params := map[string]any{
 		"chat_id": chatID,
 		"user_id": userID,
 	}
 
 	var data []byte
-	if data, err = bot.Raw(ctx, "getChatMember", params); err != nil {
-		return
+
+	data, err := bot.Raw(ctx, "getChatMember", params)
+	if err != nil {
+		return nil, err
 	}
 
-	return ParseRawResult[ChatMember](bot, data)
+	return ParseRawResult[*ChatMember](bot, data)
 }

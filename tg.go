@@ -57,7 +57,7 @@ On success, a nil error is returned.
 
 [answerCallbackQuery]: https://core.telegram.org/bots/api#answercallbackquery
 */
-func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQueryID string, params *AnswerCallbackQueryParams) (err error) {
+func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQueryID string, params *AnswerCallbackQueryParams) error {
 	if params == nil {
 		params = new(AnswerCallbackQueryParams)
 	}
@@ -65,17 +65,21 @@ func (bot *Bot) AnswerCallbackQueryWithContext(ctx context.Context, callbackQuer
 	params.CallbackQueryID = callbackQueryID
 	params.CacheTimeRaw = int64(params.CacheTime.Seconds())
 
-	var data []byte
-	if data, err = bot.Raw(ctx, "answerCallbackQuery", params); err != nil {
-		return
+	data, err := bot.Raw(ctx, "answerCallbackQuery", params)
+	if err != nil {
+		return err
 	}
 
-	var success bool
-	if success, err = ParseRawResult[bool](bot, data); !success {
+	success, err := ParseRawResult[bool](bot, data)
+	if err != nil {
+		return err
+	}
+
+	if !success {
 		return ErrExpectedTrue
 	}
 
-	return
+	return nil
 }
 
 func (callback *CallbackQuery) GetMessage() *Message {

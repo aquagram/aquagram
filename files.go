@@ -20,11 +20,11 @@ type SendDocumentParams struct {
 	ReplyMarkup                 ReplyMarkup      `json:"reply_markup,omitempty"`
 }
 
-func (bot *Bot) SendDocument(chatID string, document *InputFile, params *SendDocumentParams) (Message, error) {
+func (bot *Bot) SendDocument(chatID string, document *InputFile, params *SendDocumentParams) (*Message, error) {
 	return bot.SendDocumentWithContext(bot.stopContext, chatID, document, params)
 }
 
-func (bot *Bot) SendDocumentWithContext(ctx context.Context, chatID string, document *InputFile, params *SendDocumentParams) (message Message, err error) {
+func (bot *Bot) SendDocumentWithContext(ctx context.Context, chatID string, document *InputFile, params *SendDocumentParams) (*Message, error) {
 	if params == nil {
 		params = new(SendDocumentParams)
 	}
@@ -50,17 +50,17 @@ func (bot *Bot) SendDocumentWithContext(ctx context.Context, chatID string, docu
 		files["thumbnail"] = params.Thumbnail
 	}
 
-	var paramsMap Params
-	if paramsMap, err = sendParams.ToParams(); err != nil {
-		return
+	paramsMap, err := sendParams.ToParams()
+	if err != nil {
+		return nil, err
 	}
 
-	var data []byte
-	if data, err = bot.RawFile(ctx, "sendDocument", paramsMap, files); err != nil {
-		return
+	data, err := bot.RawFile(ctx, "sendDocument", paramsMap, files)
+	if err != nil {
+		return nil, err
 	}
 
-	return ParseRawResult[Message](bot, data)
+	return ParseRawResult[*Message](bot, data)
 }
 
 type SendPhotoParams struct {
@@ -80,11 +80,11 @@ type SendPhotoParams struct {
 	ReplyMarkup                 ReplyMarkup      `json:"reply_markup,omitempty"`
 }
 
-func (bot *Bot) SendPhoto(chatID string, photo *InputFile, params *SendPhotoParams) (Message, error) {
+func (bot *Bot) SendPhoto(chatID string, photo *InputFile, params *SendPhotoParams) (*Message, error) {
 	return bot.SendPhotoWithContext(bot.stopContext, chatID, photo, params)
 }
 
-func (bot *Bot) SendPhotoWithContext(ctx context.Context, chatID string, photo *InputFile, params *SendPhotoParams) (message Message, err error) {
+func (bot *Bot) SendPhotoWithContext(ctx context.Context, chatID string, photo *InputFile, params *SendPhotoParams) (*Message, error) {
 	if params == nil {
 		params = new(SendPhotoParams)
 	}
@@ -103,9 +103,9 @@ func (bot *Bot) SendPhotoWithContext(ctx context.Context, chatID string, photo *
 		ReplyMarkup:                 params.ReplyMarkup,
 	}
 
-	var paramsMap Params
-	if paramsMap, err = sendParams.ToParams(); err != nil {
-		return
+	paramsMap, err := sendParams.ToParams()
+	if err != nil {
+		return nil, err
 	}
 
 	files := Files{}
@@ -115,10 +115,10 @@ func (bot *Bot) SendPhotoWithContext(ctx context.Context, chatID string, photo *
 		files["thumbnail"] = params.Thumbnail
 	}
 
-	var data []byte
-	if data, err = bot.RawFile(ctx, "sendPhoto", paramsMap, files); err != nil {
-		return
+	data, err := bot.RawFile(ctx, "sendPhoto", paramsMap, files)
+	if err != nil {
+		return nil, err
 	}
 
-	return ParseRawResult[Message](bot, data)
+	return ParseRawResult[*Message](bot, data)
 }

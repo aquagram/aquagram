@@ -13,7 +13,7 @@ const (
 	FalseAsString string = "false"
 )
 
-func ParseRawResult[T any](bot *Bot, data []byte) (result T, err error) {
+func ParseRawResult[T any](bot *Bot, data []byte) (T, error) {
 	var res struct {
 		Ok          bool   `json:"ok"`
 		Result      T      `json:"result"`
@@ -21,26 +21,23 @@ func ParseRawResult[T any](bot *Bot, data []byte) (result T, err error) {
 		Description string `json:"description"`
 	}
 
-	if err = json.Unmarshal(data, &res); err != nil {
-		return
+	if err := json.Unmarshal(data, &res); err != nil {
+		return res.Result, err
 	}
 
 	if !res.Ok {
 		if res.ErrorCode != 0 {
-			err = errTgBadRequest(res.ErrorCode, res.Description)
-			return
+			return res.Result, errTgBadRequest(res.ErrorCode, res.Description)
 		}
 
-		err = errors.New("unknown error parsing raw result: " + string(data))
-		return
+		return res.Result, errors.New("unknown error parsing raw result: " + string(data))
 	}
 
 	if message, ok := any(&res.Result).(*Message); ok {
 		message.process(bot)
 	}
 
-	result = res.Result
-	return
+	return res.Result, nil
 }
 
 func ParseChatID(chatID string) string {

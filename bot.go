@@ -102,22 +102,24 @@ A simple method for testing your bot's authentication token.
 
 https://core.telegram.org/bots/api#getme
 */
-func (bot *Bot) GetMe() (User, error) {
+func (bot *Bot) GetMe() (*User, error) {
 	return bot.GetMeWithContext(bot.stopContext)
 }
 
-func (bot *Bot) GetMeWithContext(ctx context.Context) (user User, err error) {
-	var data []byte
-	if data, err = bot.Raw(ctx, "getMe", nil); err != nil {
-		return
+func (bot *Bot) GetMeWithContext(ctx context.Context) (*User, error) {
+	data, err := bot.Raw(ctx, "getMe", nil)
+	if err != nil {
+		return nil, err
 	}
 
-	if user, err = ParseRawResult[User](bot, data); err != nil {
-		return
+	user, err := ParseRawResult[*User](bot, data)
+	if err != nil {
+		return nil, err
 	}
 
-	bot.Me = &user
-	return
+	bot.Me = user
+
+	return user, nil
 }
 
 /*
