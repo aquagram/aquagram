@@ -203,7 +203,7 @@ type ForwardMessagesParams struct {
 /*
 [ForwardMessages] wraps [ForwardMessagesWithContext] using the default bot context.
 */
-func (bot *Bot) ForwardMessages(chatID string, fromChatID string, messageIDs []int64, params *ForwardMessagesParams) ([]int64, error) {
+func (bot *Bot) ForwardMessages(chatID string, fromChatID string, messageIDs []int64, params *ForwardMessagesParams) ([]*MessageID, error) {
 	return bot.ForwardMessagesWithContext(bot.stopContext, chatID, fromChatID, messageIDs, params)
 }
 
@@ -218,7 +218,7 @@ On success, an array of MessageID of the sent messages is returned.
 
 [forwardMessage]: https://core.telegram.org/bots/api#forwardmessages
 */
-func (bot *Bot) ForwardMessagesWithContext(ctx context.Context, chatID string, fromChatID string, messageIDs []int64, params *ForwardMessagesParams) ([]int64, error) {
+func (bot *Bot) ForwardMessagesWithContext(ctx context.Context, chatID string, fromChatID string, messageIDs []int64, params *ForwardMessagesParams) ([]*MessageID, error) {
 	if params == nil {
 		params = new(ForwardMessagesParams)
 	}
@@ -232,15 +232,7 @@ func (bot *Bot) ForwardMessagesWithContext(ctx context.Context, chatID string, f
 		return nil, err
 	}
 
-	ids, err := ParseRawResult[[]MessageID](bot, data)
-
-	var intArr []int64
-
-	for _, result := range ids {
-		intArr = append(intArr, result.MessageID)
-	}
-
-	return intArr, err
+	return ParseRawResult[[]*MessageID](bot, data)
 }
 
 type CopyMessageParams struct {
@@ -311,7 +303,7 @@ type CopyMessagesParams struct {
 	MessageIDs      []int64 `json:"message_ids"`
 }
 
-func (bot *Bot) CopyMessages(chatID string, fromChatID string, messageIDs []int64, params *CopyMessagesParams) ([]int64, error) {
+func (bot *Bot) CopyMessages(chatID string, fromChatID string, messageIDs []int64, params *CopyMessagesParams) ([]*MessageID, error) {
 	return bot.CopyMessagesWithContext(bot.stopContext, chatID, fromChatID, messageIDs, params)
 }
 
@@ -329,7 +321,7 @@ On success, an array of MessageID of the sent messages is returned.
 
 [copyMessages]: https://core.telegram.org/bots/api#copymessages
 */
-func (bot *Bot) CopyMessagesWithContext(ctx context.Context, chatID string, fromChatID string, messageIDs []int64, params *CopyMessagesParams) ([]int64, error) {
+func (bot *Bot) CopyMessagesWithContext(ctx context.Context, chatID string, fromChatID string, messageIDs []int64, params *CopyMessagesParams) ([]*MessageID, error) {
 	if params == nil {
 		params = new(CopyMessagesParams)
 	}
@@ -343,15 +335,7 @@ func (bot *Bot) CopyMessagesWithContext(ctx context.Context, chatID string, from
 		return nil, err
 	}
 
-	ids, err := ParseRawResult[[]MessageID](bot, data)
-
-	var intArr []int64
-
-	for _, result := range ids {
-		intArr = append(intArr, result.MessageID)
-	}
-
-	return intArr, err
+	return ParseRawResult[[]*MessageID](bot, data)
 }
 
 type EditMessageParams struct {
