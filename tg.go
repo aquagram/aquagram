@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+type BotName struct {
+	Name string `json:"name"`
+}
+
 type MaybeInaccessibleMessage = Message
 
 // https://core.telegram.org/bots/api#callbackquery

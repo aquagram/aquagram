@@ -149,3 +149,43 @@ func (bot *Bot) CloseWithContext(ctx context.Context) error {
 	_, err := bot.Raw(ctx, "close", nil)
 	return err
 }
+
+func (bot *Bot) SetMyName(name string, languageCode string) error {
+	return bot.SetMyNameWithContext(bot.stopContext, name, languageCode)
+}
+
+func (bot *Bot) SetMyNameWithContext(ctx context.Context, name string, languageCode string) error {
+	params := map[string]string{
+		"name":          name,
+		"language_code": languageCode,
+	}
+
+	data, err := bot.Raw(ctx, "setMyName", params)
+	if err != nil {
+		return err
+	}
+
+	success, err := ParseRawResult[bool](bot, data)
+	if err != nil {
+		return err
+	}
+
+	if !success {
+		return ErrExpectedTrue
+	}
+
+	return nil
+}
+
+func (bot *Bot) GetMyName(languageCode string) (*BotName, error) {
+	return bot.GetMyNameWithContext(bot.stopContext, languageCode)
+}
+
+func (bot *Bot) GetMyNameWithContext(ctx context.Context, languageCode string) (*BotName, error) {
+	data, err := bot.Raw(ctx, "getMyName", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseRawResult[*BotName](bot, data)
+}
