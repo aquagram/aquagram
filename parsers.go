@@ -33,7 +33,9 @@ func ParseRawResult[T any](bot *Bot, data []byte) (T, error) {
 		return res.Result, errors.New("unknown error parsing raw result: " + string(data))
 	}
 
-	if message, ok := any(&res.Result).(*Message); ok {
+	result := any(res.Result)
+
+	if message, ok := result.(*Message); ok {
 		message.process(bot)
 	}
 
