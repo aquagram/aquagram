@@ -4,39 +4,34 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"sync"
-)
-
-const (
-	DefaultApiUrl = "https://api.telegram.org"
 )
 
 type Bot struct {
-	ApiUrl string
-	Me     *User // only available before call getMe
+	// User-configurable properties can be found here.
+	Config *Config
+
+	// Updated on each execution of GetMe, by default is a nil-pointer.
+	Me *User
 
 	token string
 
-	Middlewares []Middleware
-	handlers    Handlers
-
-	commands        []string
+	Middlewares     []Middleware
+	handlers        Handlers
 	commandHandlers map[string][]*MessageHandler
 
 	Logger *log.Logger
 	Client *http.Client
 
-	mux         sync.Mutex
 	stopContext context.Context
 	stopFunc    context.CancelFunc
 
-	LastUpdateID   int
-	AllowedUpdates []MessageEntity
+	LastUpdateID int
 }
 
 func NewBot(token string) *Bot {
 	bot := new(Bot)
-	bot.ApiUrl = DefaultApiUrl
+	bot.Config = DefaultConfig()
+
 	bot.token = token
 
 	bot.handlers = make(Handlers)

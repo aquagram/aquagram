@@ -3,7 +3,6 @@ package aquagram
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -63,13 +62,14 @@ func (updater *PollingUpdater) Start() {
 
 	for {
 		updates, err := updater.Bot.GetUpdates(updater.Bot.stopContext, updater.Options)
-		if err != nil {
-			if errors.Is(err, context.Canceled) {
-				updater.Bot.Logger.Println("bot manually stopped")
-				break
-			}
+		if err == context.Canceled {
+			updater.Bot.Logger.Println("bot manually stopped")
+			break
+		}
 
+		if err != nil {
 			updater.Bot.Logger.Println(fmt.Errorf("%w: %w", ErrUpdaterError, err))
+			time.Sleep(updater.Bot.Config.RetriesInterval)
 			continue
 		}
 

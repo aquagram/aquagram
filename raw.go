@@ -17,12 +17,12 @@ type TelegramResponse struct {
 	Description string `json:"description"`
 }
 
-func (bot *Bot) methodUrl(method string) string {
-	return fmt.Sprintf("%s/bot%s/%s", bot.ApiUrl, bot.token, method)
+func (bot *Bot) methodURL(method string) string {
+	return fmt.Sprintf("%s/bot%s/%s", bot.Config.API, bot.token, method)
 }
 
 func (bot *Bot) Raw(ctx context.Context, method string, params any) ([]byte, error) {
-	url := bot.methodUrl(method)
+	url := bot.methodURL(method)
 
 	reqCtx, reqCancel := context.WithCancel(ctx)
 
@@ -55,7 +55,7 @@ func (bot *Bot) Raw(ctx context.Context, method string, params any) ([]byte, err
 }
 
 func (bot *Bot) RawFile(ctx context.Context, method string, params Params, files Files) ([]byte, error) {
-	url := bot.methodUrl(method)
+	url := bot.methodURL(method)
 
 	reqCtx, reqCancel := context.WithCancel(ctx)
 
