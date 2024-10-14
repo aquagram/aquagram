@@ -38,8 +38,7 @@ func (bot *Bot) OnMessage(callback MessageHandler, middlewares ...Middleware) *H
 func (bot *Bot) OnCommand(command string, callback MessageHandler, middlewares ...Middleware) *Handler {
 	handler := new(Handler)
 
-	commandMiddleware := CommandMiddleware(bot, command)
-	AddHandlerMiddlewares(handler, middlewares, commandMiddleware)
+	AddHandlerMiddlewares(handler, middlewares, CommandMiddleware(command))
 
 	handler.Callback = func(bot *Bot, update any) error {
 		message, ok := update.(*Message)

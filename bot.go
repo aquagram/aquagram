@@ -45,6 +45,10 @@ func NewBot(token string) *Bot {
 	return bot
 }
 
+func (bot *Bot) Context() context.Context {
+	return bot.stopContext
+}
+
 func (bot *Bot) start() error {
 	if bot.token == EmptyString {
 		return ErrEmptyToken

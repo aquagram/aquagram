@@ -58,7 +58,7 @@ type Handler struct {
 
 func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
 	for _, middleware := range bot.Middlewares {
-		err := middleware(update)
+		err := middleware(bot, update)
 
 		if err != nil {
 			if errors.Is(err, ErrStopPropagation) {
@@ -79,7 +79,7 @@ func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
 		var skipHandler bool
 
 		for _, middleware := range handler.Middlewares {
-			err := middleware(update)
+			err := middleware(bot, update)
 
 			if err != nil {
 				if errors.Is(err, ErrStopPropagation) {

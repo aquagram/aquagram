@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type Middleware func(event Event) error
+type Middleware func(bot *Bot, event Event) error
 
 func (bot *Bot) Use(middlewares ...Middleware) {
 	for _, middleware := range middlewares {
@@ -14,7 +14,7 @@ func (bot *Bot) Use(middlewares ...Middleware) {
 }
 
 func UsersMiddleware(ids ...int64) Middleware {
-	return func(event Event) error {
+	return func(_ *Bot, event Event) error {
 		from := event.GetFrom()
 		if from == nil {
 			return ErrStopPropagation
@@ -28,14 +28,14 @@ func UsersMiddleware(ids ...int64) Middleware {
 	}
 }
 
-func CommandMiddleware(bot *Bot, command string) Middleware {
+func CommandMiddleware(command string) Middleware {
 	slash := "/"
 
 	if !strings.HasPrefix(command, slash) {
 		command = slash + command
 	}
 
-	return func(event Event) error {
+	return func(_ *Bot, event Event) error {
 		message := event.GetMessage()
 		if message == nil {
 			return ErrStopPropagation
@@ -81,7 +81,7 @@ func CallbackQueryMiddleware(callback string) Middleware {
 		callback = callback[1:]
 	}
 
-	return func(event Event) error {
+	return func(_ *Bot, event Event) error {
 		callbackQuery := event.GetCallbackQuery()
 
 		if callbackQuery == nil {
