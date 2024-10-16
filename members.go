@@ -203,6 +203,17 @@ func (bot *Bot) UnbanChatMemberWithContext(ctx context.Context, chatID int64, us
 	return nil
 }
 
+/*
+Use this method to kick a user in a group, a supergroup or a channel.
+*/
+func (bot *Bot) KickChatMember(chatID, userID int64) error {
+	return bot.KickChatMemberWithContext(bot.Context(), chatID, userID)
+}
+
+func (bot *Bot) KickChatMemberWithContext(ctx context.Context, chatID, userID int64) error {
+	return bot.UnbanChatMemberWithContext(ctx, chatID, userID, nil)
+}
+
 type RestrictChatMemberParams struct {
 	ChatID                        int64           `json:"chat_id"`
 	UserID                        int64           `json:"user_id"`
