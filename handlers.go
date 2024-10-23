@@ -1,75 +1,66 @@
 package aquagram
 
-type MessageHandler = func(bot *Bot, message *Message) error
-type CallbackQueryHandlerCallback = func(bot *Bot, callback *CallbackQuery) error
+import (
+	"errors"
+	"regexp"
+)
 
-func (bot *Bot) OnEvent(updateType UpdateType, handler *Handler) {
+type Handlers = map[UpdateType][]*Handler
+type HandlerFunc[T any] func(bot *Bot, update T) error
+
+type Handler struct {
+	Middlewares []Middleware
+	Callback    HandlerFunc[any]
+}
+
+func (handler *Handler) Use(middlewares ...Middleware) {
+	handler.Middlewares = append(handler.Middlewares, middlewares...)
+}
+
+func Register(bot *Bot, updateType UpdateType, handler *Handler) *Handler {
 	eventHandlers, _ := bot.handlers[updateType]
 	eventHandlers = append(eventHandlers, handler)
 
 	bot.handlers[updateType] = eventHandlers
-}
-
-func AddHandlerMiddlewares(handler *Handler, userDefined []Middleware, priorized ...Middleware) {
-	for _, middleware := range priorized {
-		handler.Middlewares = append(handler.Middlewares, middleware)
-	}
-
-	handler.Middlewares = append(handler.Middlewares, userDefined...)
-}
-
-func (bot *Bot) OnMessage(callback MessageHandler, middlewares ...Middleware) *Handler {
-	handler := new(Handler)
-	handler.Middlewares = middlewares
-
-	handler.Callback = func(bot *Bot, update any) error {
-		message, ok := update.(*Message)
-		if !ok {
-			return nil
-		}
-
-		return callback(bot, message)
-	}
-
-	bot.OnEvent(OnMessage, handler)
 	return handler
 }
 
-func (bot *Bot) OnCommand(command string, callback MessageHandler, middlewares ...Middleware) *Handler {
-	handler := new(Handler)
-
-	AddHandlerMiddlewares(handler, middlewares, CommandMiddleware(command))
-
-	handler.Callback = func(bot *Bot, update any) error {
-		message, ok := update.(*Message)
+func handlerFunc[T any](fn HandlerFunc[T]) HandlerFunc[any] {
+	return func(bot *Bot, update any) error {
+		event, ok := update.(T)
 		if !ok {
-			return nil
+			return errors.New("handler func: can not convert update (type any) to generic type T")
 		}
 
-		return callback(bot, message)
+		return fn(bot, event)
 	}
-
-	bot.OnEvent(OnMessage, handler)
-
-	return handler
 }
 
-func (bot *Bot) OnCallbackQuery(callbackData string, callback CallbackQueryHandlerCallback, middlewares ...Middleware) *Handler {
-	handler := new(Handler)
+func (bot *Bot) OnMessage(handler HandlerFunc[*Message], middlewares ...Middleware) *Handler {
+	msgHandler := new(Handler)
+	msgHandler.Middlewares = middlewares
+	msgHandler.Callback = handlerFunc(handler)
 
-	callbackMiddleware := CallbackQueryMiddleware(callbackData)
-	AddHandlerMiddlewares(handler, middlewares, callbackMiddleware)
+	return Register(bot, OnMessage, msgHandler)
+}
 
-	handler.Callback = func(bot *Bot, update any) error {
-		callbackQuery, ok := update.(*CallbackQuery)
-		if !ok {
-			return nil
-		}
+func (bot *Bot) OnCommand(command string, handler HandlerFunc[*Message], middlewares ...Middleware) *Handler {
+	return bot.OnMessage(handler, CommandMiddleware(command, false))
+}
 
-		return callback(bot, callbackQuery)
-	}
+func (bot *Bot) OnRegex(regex *regexp.Regexp, handler HandlerFunc[*Message]) *Handler {
+	return bot.OnMessage(handler, RegexMiddleware(regex))
+}
 
-	bot.OnEvent(OnCallbackQuery, handler)
+func (bot *Bot) OnText(text string, strict bool, caseSensitive bool, handler HandlerFunc[*Message]) *Handler {
+	return bot.OnMessage(handler, TextMiddleware(text, strict, caseSensitive))
+}
 
-	return handler
+func (bot *Bot) OnCallbackQuery(data string, strict bool, handler HandlerFunc[*CallbackQuery], middlewares ...Middleware) *Handler {
+	callbackHandler := new(Handler)
+	callbackHandler.Use(middlewares...)
+	callbackHandler.Use(CallbackQueryMiddleware(data, strict))
+	callbackHandler.Callback = handlerFunc(handler)
+
+	return Register(bot, OnCallbackQuery, callbackHandler)
 }

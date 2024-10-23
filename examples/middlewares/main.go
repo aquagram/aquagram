@@ -19,10 +19,10 @@ func main() {
 	bot := aquagram.NewBot(os.Getenv("TOKEN"))
 
 	// global middleware
-	bot.Use(aquagram.UsersMiddleware(WhiteList...))
+	bot.Use(aquagram.WhiteListMiddleware(&WhiteList))
 
 	// handler scoped middleware
-	bot.OnCommand("start", StartCommandHandler, aquagram.UsersMiddleware(WhiteList...))
+	bot.OnCommand("start", StartCommandHandler, aquagram.WhiteListMiddleware(&WhiteList))
 
 	if err := bot.StartPolling(true); err != nil {
 		panic(err)

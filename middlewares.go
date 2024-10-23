@@ -1,101 +1,71 @@
 package aquagram
 
 import (
-	"slices"
-	"strings"
+	"fmt"
+	"regexp"
 )
 
-type Middleware func(bot *Bot, event Event) error
+type (
+	Middleware     func(next MiddlewareFunc) MiddlewareFunc
+	MiddlewareFunc func(bot *Bot, event Event) error
+
+	ErrorFunc func(bot *Bot, err error)
+)
 
 func (bot *Bot) Use(middlewares ...Middleware) {
-	for _, middleware := range middlewares {
-		bot.Middlewares = append(bot.Middlewares, middleware)
+	bot.Middlewares = append(bot.Middlewares, middlewares...)
+}
+
+func BlackListMiddleware(ids *[]int64) Middleware {
+	return BuildMiddleware(WhiteListFilter(ids))
+}
+
+func CallbackQueryMiddleware(data string, strict bool) Middleware {
+	return BuildMiddleware(CallbackQueryFilter(data, strict))
+}
+
+func ChatMemberMiddleware(chatID string) Middleware {
+	return BuildMiddleware(ChatMemberFilter(chatID))
+}
+
+func CommandMiddleware(command string, strict bool) Middleware {
+	return BuildMiddleware(CommandFilter(command))
+}
+
+func RecoverMiddleware(errorFunc ErrorFunc) Middleware {
+	return func(next MiddlewareFunc) MiddlewareFunc {
+		return func(bot *Bot, event Event) error {
+			defer func() {
+				// Currently, err is always nil and I dont know why.
+				// However, it stops the the panicking sequence, so ¯⁠\⁠_⁠(⁠ツ⁠)⁠_⁠/⁠¯
+				err := recover()
+
+				if errorFunc == nil {
+					bot.Logger.Println("recovered from panic", err)
+					return
+				}
+
+				switch v := err.(type) {
+				case error:
+					errorFunc(bot, v)
+				default:
+					errorFunc(bot, fmt.Errorf("%v", err))
+				}
+			}()
+
+			return next(bot, event)
+		}
 	}
 }
 
-func UsersMiddleware(ids ...int64) Middleware {
-	return func(_ *Bot, event Event) error {
-		from := event.GetFrom()
-		if from == nil {
-			return ErrStopPropagation
-		}
-
-		if !slices.Contains(ids, from.ID) {
-			return ErrStopPropagation
-		}
-
-		return nil
-	}
+func RegexMiddleware(regex *regexp.Regexp) Middleware {
+	return BuildMiddleware(RegexFilter(regex))
 }
 
-func CommandMiddleware(command string) Middleware {
-	slash := "/"
-
-	if !strings.HasPrefix(command, slash) {
-		command = slash + command
-	}
-
-	return func(_ *Bot, event Event) error {
-		message := event.GetMessage()
-		if message == nil {
-			return ErrStopPropagation
-		}
-
-		if message.Text == "" {
-			return ErrStopPropagation
-		}
-
-		var commandText string
-
-		entities := event.GetEntities()
-		for _, entity := range entities {
-			if entity.Type != EntityTypeBotCommand || entity.Offset != 0 {
-				continue
-			}
-
-			commandText = message.Text[entity.Offset:entity.Length]
-			break
-		}
-
-		if commandText == "" {
-			return ErrStopPropagation
-		}
-
-		atIndex := strings.Index(commandText, "@")
-		if atIndex != -1 {
-			commandText = commandText[:atIndex]
-		}
-
-		if commandText != command {
-			return ErrStopPropagation
-		}
-
-		return nil
-	}
+func TextMiddleware(text string, strict bool, caseSensitive bool) Middleware {
+	return BuildMiddleware(TextFilter(text, strict, caseSensitive))
 }
 
-func CallbackQueryMiddleware(callback string) Middleware {
-	isDynamic := strings.HasPrefix(callback, "~")
-
-	if isDynamic {
-		callback = callback[1:]
-	}
-
-	return func(_ *Bot, event Event) error {
-		callbackQuery := event.GetCallbackQuery()
-
-		if callbackQuery == nil {
-			return ErrStopPropagation
-		}
-
-		if isDynamic && strings.HasPrefix(callbackQuery.Data, callback) {
-			return nil
-		}
-
-		if callbackQuery.Data == callback {
-			return nil
-		}
-
-		return ErrStopPropagation
-	}
+func WhiteListMiddleware(ids *[]int64) Middleware {
+	return BuildMiddleware(WhiteListFilter(ids))
 }

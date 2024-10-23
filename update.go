@@ -1,9 +1,5 @@
 package aquagram
 
-import (
-	"errors"
-)
-
 type UpdateType string
 
 const (
@@ -47,63 +43,6 @@ type Update struct {
 	ChannelPost       *Message       `json:"channel_post,omitempty"`
 	EditedChannelPost *Message       `json:"edited_channel_post,omitempty"`
 	CallbackQuery     *CallbackQuery `json:"callback_query,omitempty"`
-}
-
-type Handlers = map[UpdateType][]*Handler
-
-type Handler struct {
-	Middlewares []Middleware
-	Callback    func(bot *Bot, update any) error
-}
-
-func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
-	for _, middleware := range bot.Middlewares {
-		err := middleware(bot, update)
-
-		if err != nil {
-			if errors.Is(err, ErrStopPropagation) {
-				return
-			}
-
-			bot.Logger.Printf("skiping handler execution due to a global middleware error: %v\n", err)
-			return
-		}
-	}
-
-	handlers, ok := bot.handlers[updateType]
-	if !ok {
-		return
-	}
-
-	for _, handler := range handlers {
-		var skipHandler bool
-
-		for _, middleware := range handler.Middlewares {
-			err := middleware(bot, update)
-
-			if err != nil {
-				if errors.Is(err, ErrStopPropagation) {
-					skipHandler = true
-					break
-				}
-
-				bot.Logger.Printf("skiping handler execution due to a middleware error: %v\n", err)
-				return
-			}
-		}
-
-		if skipHandler {
-			continue
-		}
-
-		if err := handler.Callback(bot, update); err != nil {
-			if errors.Is(err, ErrStopPropagation) {
-				return
-			}
-
-			bot.Logger.Printf("handler error: %v", err)
-		}
-	}
 }
 
 func (bot *Bot) DispatchUpdate(update *Update) {
@@ -154,4 +93,40 @@ func (bot *Bot) DispatchUpdate(update *Update) {
 		update.CallbackQuery.process(bot)
 		bot.HandleUpdate(OnCallbackQuery, update.CallbackQuery)
 	}
+}
+
+func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
+	next := func(bot *Bot, event Event) error {
+		for _, handler := range bot.handlers[updateType] {
+			err := runHandlerMiddlewares(bot, handler, event)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	err := runMiddlewares(bot, bot.Middlewares, update, next)
+	if err != nil {
+		bot.Logger.Printf("handling update: %v", err)
+	}
+}
+
+func runHandlerMiddlewares(bot *Bot, handler *Handler, event Event) error {
+	next := func(bot *Bot, event Event) error {
+		return handler.Callback(bot, event)
+	}
+
+	return runMiddlewares(bot, handler.Middlewares, event, next)
+}
+
+func runMiddlewares(bot *Bot, middlewares []Middleware, event Event, next MiddlewareFunc) error {
+	length := len(middlewares) - 1
+
+	for i := length; i > -1; i-- {
+		middleware := middlewares[i]
+		next = middleware(next)
+	}
+
+	return next(bot, event)
 }

@@ -22,7 +22,7 @@ type User struct {
 }
 
 func (user *User) TextMention(mode ParseMode) string {
-	if mode == ParseModeHtml {
+	if mode == ParseModeHTML {
 		return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, user.ID, user.FirstName)
 	}
 

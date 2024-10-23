@@ -30,24 +30,23 @@ func (bot *Bot) SendMediaGroupWithContext(ctx context.Context, chatID string, me
 	mediaFiles := make([]Params, 0)
 
 	for index, item := range media {
-		itemParams := item.GetParams()
+		itemParams := item.InputMediaParams()
 
-		itemParamsMap, err := itemParams.ToParams()
+		itemParamsMap, err := itemParams.Params(bot)
 		if err != nil {
 			return nil, err
 		}
 
-		itemMedia := item.GetMedia()
 		fieldname := strconv.Itoa(index)
 
-		if itemMedia.FromReader != nil || itemMedia.FromPath != EmptyString {
+		if itemParams.Media.FromReader != nil || itemParams.Media.FromPath != EmptyString {
 			itemParamsMap["media"] = fmt.Sprintf("attach://%s", fieldname)
-			files[fieldname] = itemMedia
+			files[fieldname] = itemParams.Media
 
-		} else if str := itemMedia.FromFileID; str != EmptyString {
+		} else if str := itemParams.Media.FromFileID; str != EmptyString {
 			itemParamsMap["media"] = str
 
-		} else if str := itemMedia.FromURL; str != EmptyString {
+		} else if str := itemParams.Media.FromURL; str != EmptyString {
 			itemParamsMap["media"] = str
 
 		} else {
@@ -68,7 +67,7 @@ func (bot *Bot) SendMediaGroupWithContext(ctx context.Context, chatID string, me
 		ReplyParameters:      params.ReplyParameters,
 	}
 
-	paramsMap, err := sendParams.ToParams()
+	paramsMap, err := sendParams.Params(bot)
 	if err != nil {
 		return nil, err
 	}

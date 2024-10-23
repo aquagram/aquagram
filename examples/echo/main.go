@@ -13,12 +13,12 @@ func StartCommandHandler(bot *aquagram.Bot, message *aquagram.Message) error {
 }
 
 func HelloCommandHandler(bot *aquagram.Bot, message *aquagram.Message) error {
-	mention := message.From.TextMention(aquagram.ParseModeHtml)
+	mention := message.From.TextMention(aquagram.ParseModeHTML)
 	text := fmt.Sprintf("Hi %s!", mention)
 
 	// a non-nil message is always returned when error is nil.
 	msg, err := message.Reply(text, &aquagram.SendMessageParams{
-		ParseMode: aquagram.ParseModeHtml,
+		ParseMode: aquagram.ParseModeHTML,
 	})
 
 	fmt.Println(msg.Text)

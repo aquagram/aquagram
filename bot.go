@@ -15,9 +15,8 @@ type Bot struct {
 
 	token string
 
-	Middlewares     []Middleware
-	handlers        Handlers
-	commandHandlers map[string][]*MessageHandler
+	Middlewares []Middleware
+	handlers    Handlers
 
 	Logger *log.Logger
 	Client *http.Client

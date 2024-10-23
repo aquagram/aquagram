@@ -1,20 +1,43 @@
 package aquagram
 
-import (
-	"encoding/json"
-	"strconv"
-)
+import "context"
 
 type MediaGroup []InputMedia
 
 type InputMedia interface {
-	GetParams() InputMediaParams
-	GetMedia() *InputFile
-	GetThumbnail() *InputFile
+	InputMediaParams() InputMediaParams
+}
+
+type MediaType int8
+
+const (
+	mediaTypeUnknown MediaType = iota
+	MediaTypeAnimation
+	MediaTypeAudio
+	MediaTypeDocument
+	MediaTypePhoto
+	MediaTypeVideo
+)
+
+func (media MediaType) String() string {
+	switch media {
+	case MediaTypeAnimation:
+		return "animation"
+	case MediaTypeAudio:
+		return "audio"
+	case MediaTypeDocument:
+		return "document"
+	case MediaTypePhoto:
+		return "photo"
+	case MediaTypeVideo:
+		return "video"
+	default:
+		return ""
+	}
 }
 
 type InputMediaParams struct {
-	Type                        string          `json:"type"`
+	Type                        MediaType       `json:"type"`
 	Media                       *InputFile      `json:"media"`
 	Thumbnail                   *InputFile      `json:"thumbnail,omitempty"`
 	Caption                     string          `json:"caption,omitempty"`
@@ -31,65 +54,24 @@ type InputMediaParams struct {
 	SupportStreaming            bool            `json:"supports_streaming,omitempty"`
 }
 
-func (p *InputMediaParams) ToParams() (Params, error) {
-	params := make(Params)
-
-	params["type"] = p.Type
-
-	if p.Caption != EmptyString {
-		params["caption"] = p.Caption
+func (params InputMediaParams) Params(bot *Bot) (Params, error) {
+	common := CommonSendParams{
+		Type:                        params.Type,
+		Caption:                     params.Caption,
+		ParseMode:                   params.ParseMode,
+		CaptionEntities:             params.CaptionEntities,
+		ShowCaptionAboveMedia:       params.ShowCaptionAboveMedia,
+		Width:                       params.Width,
+		Height:                      params.Height,
+		Duration:                    params.Duration,
+		HasSpoiler:                  params.HasSpoiler,
+		DisableContentTypeDetection: params.DisableContentTypeDetection,
+		Performer:                   params.Performer,
+		Title:                       params.Title,
+		SupportStreaming:            params.SupportStreaming,
 	}
 
-	if string(p.ParseMode) != EmptyString {
-		params["parse_mode"] = string(p.ParseMode)
-	}
-
-	if p.CaptionEntities != nil {
-		data, err := json.Marshal(p.CaptionEntities)
-		if err != nil {
-			return nil, err
-		}
-
-		params["caption_entities"] = string(data)
-	}
-
-	if p.ShowCaptionAboveMedia {
-		params["show_caption_above_media"] = TrueAsString
-	}
-
-	if p.Width != 0 {
-		params["width"] = strconv.Itoa(p.Width)
-	}
-
-	if p.Height != 0 {
-		params["height"] = strconv.Itoa(p.Height)
-	}
-
-	if p.Duration != 0 {
-		params["duration"] = strconv.Itoa(p.Duration)
-	}
-
-	if p.HasSpoiler {
-		params["has_spoiler"] = TrueAsString
-	}
-
-	if p.DisableContentTypeDetection {
-		params["disable_content_type_detection"] = TrueAsString
-	}
-
-	if p.Performer != EmptyString {
-		params["performer"] = p.Performer
-	}
-
-	if p.Title != EmptyString {
-		params["title"] = p.Title
-	}
-
-	if p.SupportStreaming {
-		params["support_streaming"] = TrueAsString
-	}
-
-	return params, nil
+	return common.Params(bot)
 }
 
 // This object represents one size of a photo or a file / sticker thumbnail.
@@ -208,9 +190,11 @@ type InputMediaAnimation struct {
 	HasSpoiler            bool            `json:"has_spoiler,omitempty"`
 }
 
-func (media *InputMediaAnimation) GetParams() InputMediaParams {
+func (media *InputMediaAnimation) InputMediaParams() InputMediaParams {
 	return InputMediaParams{
-		Type:                  "animation",
+		Type:                  MediaTypeAnimation,
+		Media:                 media.Media,
+		Thumbnail:             media.Thumbnail,
 		Caption:               media.Caption,
 		ParseMode:             media.ParseMode,
 		CaptionEntities:       media.CaptionEntities,
@@ -220,14 +204,6 @@ func (media *InputMediaAnimation) GetParams() InputMediaParams {
 		Duration:              media.Duration,
 		HasSpoiler:            media.HasSpoiler,
 	}
-}
-
-func (media *InputMediaAnimation) GetMedia() *InputFile {
-	return media.Media
-}
-
-func (media *InputMediaAnimation) GetThumbnail() *InputFile {
-	return media.Thumbnail
 }
 
 // Represents a general file to be sent.
@@ -243,22 +219,16 @@ type InputMediaDocument struct {
 	DisableContentTypeDetection bool            `json:"disable_content_type_detection,omitempty"`
 }
 
-func (media *InputMediaDocument) GetParams() InputMediaParams {
+func (media *InputMediaDocument) InputMediaParams() InputMediaParams {
 	return InputMediaParams{
-		Type:                        "document",
+		Type:                        MediaTypeDocument,
+		Media:                       media.Media,
+		Thumbnail:                   media.Thumbnail,
 		Caption:                     media.Caption,
 		ParseMode:                   media.ParseMode,
 		CaptionEntities:             media.CaptionEntities,
 		DisableContentTypeDetection: media.DisableContentTypeDetection,
 	}
-}
-
-func (media *InputMediaDocument) GetMedia() *InputFile {
-	return media.Media
-}
-
-func (media *InputMediaDocument) GetThumbnail() *InputFile {
-	return media.Thumbnail
 }
 
 // Represents an audio file to be treated as music to be sent.
@@ -276,9 +246,11 @@ type InputMediaAudio struct {
 	Title           string          `json:"title,omitempty"`
 }
 
-func (media *InputMediaAudio) GetParams() InputMediaParams {
+func (media *InputMediaAudio) InputMediaParams() InputMediaParams {
 	return InputMediaParams{
-		Type:            "audio",
+		Type:            MediaTypeAudio,
+		Media:           media.Media,
+		Thumbnail:       media.Thumbnail,
 		Caption:         media.Caption,
 		ParseMode:       media.ParseMode,
 		CaptionEntities: media.CaptionEntities,
@@ -286,14 +258,6 @@ func (media *InputMediaAudio) GetParams() InputMediaParams {
 		Performer:       media.Performer,
 		Title:           media.Title,
 	}
-}
-
-func (media *InputMediaAudio) GetMedia() *InputFile {
-	return media.Media
-}
-
-func (media *InputMediaAudio) GetThumbnail() *InputFile {
-	return media.Thumbnail
 }
 
 // Represents a photo to be sent.
@@ -309,23 +273,16 @@ type InputMediaPhoto struct {
 	HasSpoiler            bool            `json:"has_spoiler,omitempty"`
 }
 
-func (media *InputMediaPhoto) GetParams() InputMediaParams {
+func (media *InputMediaPhoto) InputMediaParams() InputMediaParams {
 	return InputMediaParams{
-		Type:                  "photo",
+		Type:                  MediaTypePhoto,
+		Media:                 media.Media,
 		Caption:               media.Caption,
 		ParseMode:             media.ParseMode,
 		CaptionEntities:       media.CaptionEntities,
 		ShowCaptionAboveMedia: media.ShowCaptionAboveMedia,
 		HasSpoiler:            media.HasSpoiler,
 	}
-}
-
-func (media *InputMediaPhoto) GetMedia() *InputFile {
-	return media.Media
-}
-
-func (media *InputMediaPhoto) GetThumbnail() *InputFile {
-	return nil
 }
 
 // Represents a video to be sent.
@@ -346,9 +303,11 @@ type InputMediaVideo struct {
 	HasSpoiler            bool            `json:"has_spoiler,omitempty"`
 }
 
-func (media *InputMediaVideo) GetParams() InputMediaParams {
+func (media *InputMediaVideo) InputMediaParams() InputMediaParams {
 	return InputMediaParams{
-		Type:                  "video",
+		Type:                  MediaTypeVideo,
+		Media:                 media.Media,
+		Thumbnail:             media.Thumbnail,
 		Caption:               media.Caption,
 		ParseMode:             media.ParseMode,
 		CaptionEntities:       media.CaptionEntities,
@@ -361,10 +320,269 @@ func (media *InputMediaVideo) GetParams() InputMediaParams {
 	}
 }
 
-func (media *InputMediaVideo) GetMedia() *InputFile {
-	return media.Media
+type SendAudioParams struct {
+	BusinessConnectionID string           `json:"business_connection_id,omitempty"`
+	MessageThreadID      int64            `json:"message_thread_id,omitempty"`
+	Audio                *InputFile       `json:"audio"`
+	Caption              string           `json:"caption,omitempty"`
+	ParseMode            ParseMode        `json:"parse_mode,omitempty"`
+	CaptionEntities      []MessageEntity  `json:"caption_entities,omitempty"`
+	Duration             int              `json:"duration,omitempty"`
+	Performer            string           `json:"performer,omitempty"`
+	Title                string           `json:"title,omitempty"`
+	Thumbnail            *InputFile       `json:"thumbnail,omitempty"`
+	DisableNotification  bool             `json:"disable_notification,omitempty"`
+	ProtectContent       bool             `json:"protect_content,omitempty"`
+	MessageEffectID      string           `json:"message_effect_id,omitempty"`
+	ReplyParameters      *ReplyParameters `json:"reply_parameters,omitempty"`
+	ReplyMarkup          ReplyMarkup      `json:"reply_markup,omitempty"`
 }
 
-func (media *InputMediaVideo) GetThumbnail() *InputFile {
-	return nil
+/*
+[sendAudio] - Use this method to send audio files.
+
+If you want Telegram clients to display them in the music player.
+Your audio must be in the .MP3 or .M4A format.
+
+[sendAudio]: https://core.telegram.org/bots/api#sendaudio
+*/
+func (bot *Bot) SendAudio(chatID string, audio *InputFile, params *SendAudioParams) (*Message, error) {
+	return bot.SendAudioWithContext(bot.Context(), chatID, audio, params)
+}
+
+func (bot *Bot) SendAudioWithContext(ctx context.Context, chatID string, audio *InputFile, params *SendAudioParams) (*Message, error) {
+	if params == nil {
+		params = new(SendAudioParams)
+	}
+
+	sendParams := CommonSendParams{
+		ChatID:               chatID,
+		BusinessConnectionID: params.BusinessConnectionID,
+		MessageThreadID:      params.MessageThreadID,
+		Caption:              params.Caption,
+		ParseMode:            params.ParseMode,
+		CaptionEntities:      params.CaptionEntities,
+		Duration:             params.Duration,
+		Performer:            params.Performer,
+		Title:                params.Title,
+		DisableNotification:  params.DisableNotification,
+		ProtectContent:       params.ProtectContent,
+		MessageEffectID:      params.MessageEffectID,
+		ReplyParameters:      params.ReplyParameters,
+		ReplyMarkup:          params.ReplyMarkup,
+	}
+
+	files := Files{}
+	files["audio"] = audio
+
+	if params.Thumbnail != nil {
+		files["thumbnail"] = params.Thumbnail
+	}
+
+	paramsMap, err := sendParams.Params(bot)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := bot.RawFile(ctx, "sendAudio", paramsMap, files)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseRawResult[*Message](bot, data)
+}
+
+type SendDocumentParams struct {
+	BusinessConnectionID        string           `json:"business_connection_id,omitempty"`
+	MessageThreadID             int64            `json:"message_thread_id,omitempty"`
+	Document                    *InputFile       `json:"document"`
+	Thumbnail                   *InputFile       `json:"thumbnail,omitempty"`
+	Caption                     string           `json:"caption,omitempty"`
+	ParseMode                   ParseMode        `json:"parse_mode,omitempty"`
+	CaptionEntities             []MessageEntity  `json:"caption_entities,omitempty"`
+	DisableContentTypeDetection bool             `json:"disable_content_type_detection,omitempty"`
+	DisableNotification         bool             `json:"disable_notification,omitempty"`
+	ProtectContent              bool             `json:"protect_content,omitempty"`
+	MessageEffectID             string           `json:"message_effect_id,omitempty"`
+	ReplyParameters             *ReplyParameters `json:"reply_parameters,omitempty"`
+	ReplyMarkup                 ReplyMarkup      `json:"reply_markup,omitempty"`
+}
+
+/*
+[sendDocument] - Use this method to send general files.
+
+[sendDocument]: https://core.telegram.org/bots/api#senddocument
+*/
+func (bot *Bot) SendDocument(chatID string, document *InputFile, params *SendDocumentParams) (*Message, error) {
+	return bot.SendDocumentWithContext(bot.stopContext, chatID, document, params)
+}
+
+func (bot *Bot) SendDocumentWithContext(ctx context.Context, chatID string, document *InputFile, params *SendDocumentParams) (*Message, error) {
+	if params == nil {
+		params = new(SendDocumentParams)
+	}
+
+	sendParams := CommonSendParams{
+		ChatID:               chatID,
+		BusinessConnectionID: params.BusinessConnectionID,
+		MessageThreadID:      params.MessageThreadID,
+		Caption:              params.Caption,
+		ParseMode:            params.ParseMode,
+		CaptionEntities:      params.CaptionEntities,
+		DisableNotification:  params.DisableNotification,
+		ProtectContent:       params.ProtectContent,
+		MessageEffectID:      params.MessageEffectID,
+		ReplyParameters:      params.ReplyParameters,
+		ReplyMarkup:          params.ReplyMarkup,
+	}
+
+	files := Files{}
+	files["document"] = document
+
+	if params.Thumbnail != nil {
+		files["thumbnail"] = params.Thumbnail
+	}
+
+	paramsMap, err := sendParams.Params(bot)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := bot.RawFile(ctx, "sendDocument", paramsMap, files)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseRawResult[*Message](bot, data)
+}
+
+type SendPhotoParams struct {
+	BusinessConnectionID        string           `json:"business_connection_id,omitempty"`
+	ChatID                      string           `json:"chat_id"`
+	MessageThreadID             int64            `json:"message_thread_id,omitempty"`
+	Photo                       *InputFile       `json:"photo"`
+	Thumbnail                   *InputFile       `json:"thumbnail,omitempty"`
+	Caption                     string           `json:"caption,omitempty"`
+	ParseMode                   ParseMode        `json:"parse_mode,omitempty"`
+	CaptionEntities             []MessageEntity  `json:"caption_entities,omitempty"`
+	DisableContentTypeDetection bool             `json:"disable_content_type_detection"`
+	DisableNotification         bool             `json:"disable_notification,omitempty"`
+	ProtectContent              bool             `json:"protect_content,omitempty"`
+	MessageEffectID             string           `json:"message_effect_id,omitempty"`
+	ReplyParameters             *ReplyParameters `json:"reply_parameters,omitempty"`
+	ReplyMarkup                 ReplyMarkup      `json:"reply_markup,omitempty"`
+}
+
+/*
+[sendPhoto] - Use this method to send photos.
+
+[sendPhoto]: https://core.telegram.org/bots/api#sendphoto
+*/
+func (bot *Bot) SendPhoto(chatID string, photo *InputFile, params *SendPhotoParams) (*Message, error) {
+	return bot.SendPhotoWithContext(bot.stopContext, chatID, photo, params)
+}
+
+func (bot *Bot) SendPhotoWithContext(ctx context.Context, chatID string, photo *InputFile, params *SendPhotoParams) (*Message, error) {
+	if params == nil {
+		params = new(SendPhotoParams)
+	}
+
+	sendParams := CommonSendParams{
+		BusinessConnectionID:        params.BusinessConnectionID,
+		ChatID:                      chatID,
+		MessageThreadID:             params.MessageThreadID,
+		Caption:                     params.Caption,
+		ParseMode:                   params.ParseMode,
+		CaptionEntities:             params.CaptionEntities,
+		DisableContentTypeDetection: params.DisableContentTypeDetection,
+		ProtectContent:              params.ProtectContent,
+		MessageEffectID:             params.MessageEffectID,
+		ReplyParameters:             params.ReplyParameters,
+		ReplyMarkup:                 params.ReplyMarkup,
+	}
+
+	paramsMap, err := sendParams.Params(bot)
+	if err != nil {
+		return nil, err
+	}
+
+	files := Files{}
+	files["photo"] = photo
+
+	if params.Thumbnail != nil {
+		files["thumbnail"] = params.Thumbnail
+	}
+
+	data, err := bot.RawFile(ctx, "sendPhoto", paramsMap, files)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseRawResult[*Message](bot, data)
+}
+
+type SendVideoParams struct {
+	BusinessConnectionID        string           `json:"business_connection_id,omitempty"`
+	MessageThreadID             int64            `json:"message_thread_id,omitempty"`
+	Video                       *InputFile       `json:"video"`
+	Duration                    int              `json:"duration,omitempty"`
+	Width                       int              `json:"width,omitempty"`
+	Height                      int              `json:"height,omitempty"`
+	Thumbnail                   *InputFile       `json:"thumbnail,omitempty"`
+	Caption                     string           `json:"caption,omitempty"`
+	ParseMode                   ParseMode        `json:"parse_mode,omitempty"`
+	CaptionEntities             []MessageEntity  `json:"caption_entities,omitempty"`
+	DisableContentTypeDetection bool             `json:"disable_content_type_detection,omitempty"`
+	DisableNotification         bool             `json:"disable_notification,omitempty"`
+	ProtectContent              bool             `json:"protect_content,omitempty"`
+	MessageEffectID             string           `json:"message_effect_id,omitempty"`
+	ReplyParameters             *ReplyParameters `json:"reply_parameters,omitempty"`
+	ReplyMarkup                 ReplyMarkup      `json:"reply_markup,omitempty"`
+}
+
+func (bot *Bot) SendVideo(chatID string, video *InputFile, params *SendVideoParams) (*Message, error) {
+	return bot.SendVideoWithContext(bot.Context(), chatID, video, params)
+}
+
+func (bot *Bot) SendVideoWithContext(ctx context.Context, chatID string, video *InputFile, params *SendVideoParams) (*Message, error) {
+	if params == nil {
+		params = new(SendVideoParams)
+	}
+
+	sendParams := CommonSendParams{
+		BusinessConnectionID: params.BusinessConnectionID,
+		ChatID:               chatID,
+		MessageThreadID:      params.MessageThreadID,
+		Duration:             params.Duration,
+		Width:                params.Width,
+		Height:               params.Height,
+		Caption:              params.Caption,
+		ParseMode:            params.ParseMode,
+		CaptionEntities:      params.CaptionEntities,
+
+		DisableContentTypeDetection: params.DisableContentTypeDetection,
+		ProtectContent:              params.ProtectContent,
+		MessageEffectID:             params.MessageEffectID,
+		ReplyParameters:             params.ReplyParameters,
+		ReplyMarkup:                 params.ReplyMarkup,
+	}
+
+	paramsMap, err := sendParams.Params(bot)
+	if err != nil {
+		return nil, err
+	}
+
+	files := Files{}
+	files["video"] = video
+
+	if params.Thumbnail != nil {
+		files["thumbnail"] = params.Thumbnail
+	}
+
+	data, err := bot.RawFile(ctx, "sendVideo", paramsMap, files)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseRawResult[*Message](bot, data)
 }
