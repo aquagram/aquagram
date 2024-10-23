@@ -24,7 +24,7 @@ func (mode ParseMode) String() string {
 }
 
 func (mode ParseMode) MarshalJSON() ([]byte, error) {
-	return []byte(mode.String()), nil
+	return []byte("\"" + mode.String() + "\""), nil
 }
 
 func (bot *Bot) ParseMode(mode ParseMode) string {
