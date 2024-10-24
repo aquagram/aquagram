@@ -2,8 +2,6 @@ package aquagram
 
 import (
 	"context"
-	"log"
-	"net/http"
 )
 
 type Bot struct {
@@ -18,9 +16,6 @@ type Bot struct {
 	Middlewares []Middleware
 	handlers    Handlers
 
-	Logger *log.Logger
-	Client *http.Client
-
 	stopContext context.Context
 	stopFunc    context.CancelFunc
 
@@ -32,12 +27,7 @@ func NewBot(token string) *Bot {
 	bot.Config = DefaultConfig()
 
 	bot.token = token
-
 	bot.handlers = make(Handlers)
-	bot.Client = new(http.Client)
-
-	bot.Logger = log.Default()
-	bot.Logger.SetPrefix("[aquagram]: ")
 
 	bot.stopContext, bot.stopFunc = context.WithCancel(context.Background())
 
@@ -56,6 +46,10 @@ func (bot *Bot) start() error {
 	_, err := bot.GetMe()
 	if err != nil {
 		return err
+	}
+
+	if bot.Config.OnStartFunc != nil {
+		bot.Config.OnStartFunc(bot)
 	}
 
 	return nil

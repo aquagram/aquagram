@@ -49,8 +49,8 @@ func (updater *PollingUpdater) Start() {
 		}
 
 		updates, err := updater.Bot.GetUpdates(updater.Bot.stopContext, params)
-		if err != nil {
-			updater.Bot.Logger.Println(fmt.Errorf("%w: %w", ErrUpdaterError, err))
+		if err != nil && updater.Bot.Config.OnErrorFunc != nil {
+			updater.Bot.Config.OnErrorFunc(updater.Bot, fmt.Errorf("%w: %w", ErrUpdaterError, err))
 
 		} else {
 			if len(updates) > 0 {
@@ -63,12 +63,12 @@ func (updater *PollingUpdater) Start() {
 	for {
 		updates, err := updater.Bot.GetUpdates(updater.Bot.stopContext, updater.Options)
 		if err == context.Canceled {
-			updater.Bot.Logger.Println("bot manually stopped")
+			updater.Bot.Config.Logger.Println("bot manually stopped")
 			break
 		}
 
 		if err != nil {
-			updater.Bot.Logger.Println(fmt.Errorf("%w: %w", ErrUpdaterError, err))
+			updater.Bot.Config.Logger.Println(fmt.Errorf("%w: %w", ErrUpdaterError, err))
 			time.Sleep(updater.Bot.Config.RetriesInterval)
 			continue
 		}
@@ -126,10 +126,11 @@ func (updater *WebhookUpdater) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	update := new(Update)
-
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(update); err != nil {
-		updater.Bot.Logger.Println(fmt.Errorf("%w: %w", ErrUpdaterError, err))
+
+	err := decoder.Decode(update)
+	if err != nil && updater.Bot.Config.OnErrorFunc != nil {
+		updater.Bot.Config.OnErrorFunc(updater.Bot, fmt.Errorf("%w: %w", ErrUpdaterError, err))
 		return
 	}
 

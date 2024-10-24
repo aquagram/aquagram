@@ -1,5 +1,7 @@
 package aquagram
 
+import "fmt"
+
 type UpdateType string
 
 const (
@@ -111,8 +113,8 @@ func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
 	}
 
 	err := bot.runMiddlewares(bot.Middlewares, update, next)
-	if err != nil {
-		bot.Logger.Printf("handling update: %v", err)
+	if err != nil && bot.Config.OnErrorFunc != nil {
+		bot.Config.OnErrorFunc(bot, fmt.Errorf("handling update: %w", err))
 	}
 }
 

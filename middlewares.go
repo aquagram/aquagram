@@ -8,8 +8,6 @@ import (
 type (
 	Middleware     func(next MiddlewareFunc) MiddlewareFunc
 	MiddlewareFunc func(bot *Bot, event Event) error
-
-	ErrorFunc func(bot *Bot, err error)
 )
 
 func (bot *Bot) Use(middlewares ...Middleware) {
@@ -40,8 +38,12 @@ func RecoverMiddleware(errorFunc ErrorFunc) Middleware {
 				// However, it stops the the panicking sequence, so ¯⁠\⁠_⁠(⁠ツ⁠)⁠_⁠/⁠¯
 				err := recover()
 
-				if errorFunc == nil {
-					bot.Logger.Println("recovered from panic", err)
+				if err != nil {
+					if errorFunc != nil {
+						errorFunc(bot, fmt.Errorf("%v", err))
+					} else {
+						bot.Config.Logger.Println("recovered from panic", err)
+					}
 					return
 				}
 

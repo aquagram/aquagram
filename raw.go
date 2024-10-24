@@ -46,7 +46,7 @@ func (bot *Bot) Raw(ctx context.Context, method string, params any) ([]byte, err
 
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := bot.Client.Do(req)
+	res, err := bot.Config.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (bot *Bot) RawFile(ctx context.Context, method string, params Params, files
 
 	req.Header.Set("Content-Type", form.FormDataContentType())
 
-	res, err := bot.Client.Do(req)
+	res, err := bot.Config.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
