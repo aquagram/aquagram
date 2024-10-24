@@ -37,12 +37,14 @@ const (
 )
 
 type Update struct {
-	UpdateID          int            `json:"update_id"`
-	Message           *Message       `json:"message,omitempty"`
-	EditedMessage     *Message       `json:"edited_message,omitempty"`
-	ChannelPost       *Message       `json:"channel_post,omitempty"`
-	EditedChannelPost *Message       `json:"edited_channel_post,omitempty"`
-	CallbackQuery     *CallbackQuery `json:"callback_query,omitempty"`
+	UpdateID              int            `json:"update_id"`
+	Message               *Message       `json:"message,omitempty"`
+	EditedMessage         *Message       `json:"edited_message,omitempty"`
+	ChannelPost           *Message       `json:"channel_post,omitempty"`
+	EditedChannelPost     *Message       `json:"edited_channel_post,omitempty"`
+	BusinessMessage       *Message       `json:"business_message,omitempty"`
+	EditedBusinessMessage *Message       `json:"edited_business_message,omitempty"`
+	CallbackQuery         *CallbackQuery `json:"callback_query,omitempty"`
 }
 
 func (bot *Bot) DispatchUpdate(update *Update) {
@@ -89,6 +91,14 @@ func (bot *Bot) DispatchUpdate(update *Update) {
 		bot.HandleUpdate(OnEditedChannelPost, update.ChannelPost)
 	}
 
+	if update.BusinessMessage != nil {
+		bot.HandleUpdate(OnBusinessMessage, update.BusinessMessage)
+	}
+
+	if update.EditedBusinessMessage != nil {
+		bot.HandleUpdate(OnBusinessMessage, update.EditedBusinessMessage)
+	}
+
 	if update.CallbackQuery != nil {
 		update.CallbackQuery.process(bot)
 		bot.HandleUpdate(OnCallbackQuery, update.CallbackQuery)
@@ -97,30 +107,39 @@ func (bot *Bot) DispatchUpdate(update *Update) {
 
 func (bot *Bot) HandleUpdate(updateType UpdateType, update Event) {
 	next := func(bot *Bot, event Event) error {
-		for _, handler := range bot.handlers[updateType] {
-			err := runHandlerMiddlewares(bot, handler, event)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+		return bot.runHandlers(bot.handlers, updateType, event)
 	}
 
-	err := runMiddlewares(bot, bot.Middlewares, update, next)
+	err := bot.runMiddlewares(bot.Middlewares, update, next)
 	if err != nil {
 		bot.Logger.Printf("handling update: %v", err)
 	}
 }
 
-func runHandlerMiddlewares(bot *Bot, handler *Handler, event Event) error {
+func (bot *Bot) runHandlers(handlers Handlers, updateType UpdateType, event Event) error {
+	for _, handler := range handlers[updateType] {
+		err := bot.runHandlerMiddlewares(handler, event)
+		if err == StopPropagation {
+			break
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (bot *Bot) runHandlerMiddlewares(handler *Handler, event Event) error {
 	next := func(bot *Bot, event Event) error {
 		return handler.Callback(bot, event)
 	}
 
-	return runMiddlewares(bot, handler.Middlewares, event, next)
+	return bot.runMiddlewares(handler.Middlewares, event, next)
 }
 
-func runMiddlewares(bot *Bot, middlewares []Middleware, event Event, next MiddlewareFunc) error {
+func (bot *Bot) runMiddlewares(middlewares []Middleware, event Event, next MiddlewareFunc) error {
 	length := len(middlewares) - 1
 
 	for i := length; i > -1; i-- {

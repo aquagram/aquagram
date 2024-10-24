@@ -5,9 +5,15 @@ import (
 	"fmt"
 )
 
-var (
-	ErrStopPropagation = errors.New("stop event propagation")
+/*
+[StopPropagation] is an special error that stops the
+propagation of the current update without log any error.
 
+To use it, just returns it in any [HandlerFunc].
+*/
+var StopPropagation = errors.New("stop event propagation")
+
+var (
 	// user errors
 	ErrUserError         = errors.New("user error")
 	ErrEmptyToken        = fmt.Errorf("%w: empty bot token", ErrUserError)
